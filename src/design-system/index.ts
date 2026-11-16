@@ -7,3 +7,4 @@ export * from './primitives';
 export * from './Logo';
 export { cx } from './cx';
 export * from './chart';
+export * from './SegmentIcon';

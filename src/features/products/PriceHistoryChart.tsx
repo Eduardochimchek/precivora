@@ -5,7 +5,7 @@ import { packagePrice } from '@/services/units';
 import { formatDate, formatShort } from '@/utils/date';
 import { money } from '@/utils/format';
 
-/** Preço da embalagem ao longo do tempo, uma linha por mercado (cor = cor do mercado). */
+/** Preço da embalagem ao longo do tempo, uma linha por lugar (cor = cor do lugar). */
 export function PriceHistoryChart({ records, stores }: { product: Product; records: PriceRecord[]; stores: Map<ID, Store> }) {
   const theme = useChartTheme();
   const storeIds = [...new Set(records.map((r) => r.storeId))].slice(0, 8);
@@ -22,7 +22,7 @@ export function PriceHistoryChart({ records, stores }: { product: Product; recor
 
   return (
     <figure>
-      <figcaption className="sr-only">Histórico de preços por mercado. Os valores estão na lista de registros abaixo.</figcaption>
+      <figcaption className="sr-only">Histórico de preços por lugar. Os valores estão na lista de registros abaixo.</figcaption>
       <div className="h-56 w-full">
         <ResponsiveContainer>
           <LineChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>

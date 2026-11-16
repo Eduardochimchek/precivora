@@ -1,7 +1,8 @@
 import { db, SCHEMA_VERSION } from '@/db/database';
 import { analyzeBackup, applyBackup, exportBackup, wipeAllData } from '@/services/backup';
 import { saveProduct } from '@/repositories/catalog';
-import { saveStore } from '@/repositories/places';
+import { savePlace } from '@/repositories/places';
+import { SEG_MERCADO } from '@/db/defaults';
 import { savePrice } from '@/repositories/prices';
 import { savePurchase } from '@/repositories/purchases';
 import { saveReview } from '@/repositories/reviews';
@@ -11,7 +12,7 @@ beforeEach(resetDb);
 
 async function seed() {
   await db.categories.add({ id: 'cat1', name: 'Mercearia', color: '#D97706', createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z' });
-  const s = await saveStore({ name: 'Mercado A', color: '#2a78d6', active: true });
+  const s = await savePlace({ segmentId: SEG_MERCADO, name: 'Mercado A', color: '#2a78d6', active: true });
   const p = await saveProduct({ name: 'Arroz', brandName: 'Tio João', categoryId: 'cat1', unit: 'kg', packageSize: 5 });
   await savePrice({ productId: p, storeId: s, price: 25.9, date: '2026-11-01T12:00:00Z' });
   await savePurchase({ storeId: s, date: '2026-11-02T12:00:00Z', items: [{ productId: p, quantity: 1, unitPrice: 24.9 }] });

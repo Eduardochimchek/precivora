@@ -41,7 +41,7 @@ export default function ListsPage() {
           title={tab === 'ativas' ? 'Nenhuma lista ainda' : 'Nenhuma lista arquivada'}
           action={tab === 'ativas' ? <Button onClick={() => setCreating(true)}>Criar lista</Button> : undefined}
         >
-          {tab === 'ativas' ? 'Monte a lista com seus produtos e o Precivora calcula o total em cada mercado.' : undefined}
+          {tab === 'ativas' ? 'Monte a lista com seus produtos e o Precivora calcula o total em cada lugar.' : undefined}
         </EmptyState>
       ) : (
         <ul className="grid gap-2 sm:grid-cols-2">

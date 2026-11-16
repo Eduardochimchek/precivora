@@ -197,7 +197,7 @@ export default function ListDetailPage() {
           {rec?.kind === 'insufficient' ? (
             <Card className="flex items-start gap-3 p-4 text-sm">
               <Info className="mt-0.5 h-5 w-5 shrink-0 text-accent" aria-hidden />
-              <span>{rec.reason} Registre preços dos itens nos mercados para comparar.</span>
+              <span>{rec.reason} Registre preços dos itens nos lugares para comparar.</span>
             </Card>
           ) : (
             <>
@@ -205,7 +205,7 @@ export default function ListDetailPage() {
                 <section aria-label="Recomendação" className="rounded-xl bg-navy p-5 text-[#F1F5F9] dark:bg-raised">
                   <div className="flex items-center gap-2 text-sm text-[#94A3B8]">
                     {rec.kind === 'split' ? <Route className="h-4 w-4 text-lime" aria-hidden /> : <Trophy className="h-4 w-4 text-lime" aria-hidden />}
-                    {rec.kind === 'split' ? 'Compra dividida' : 'Melhor mercado único'}
+                    {rec.kind === 'split' ? 'Compra dividida' : 'Melhor lugar único'}
                   </div>
                   <div className="mt-2 font-display text-xl font-bold leading-snug">{rec.stores.map((s) => storeMap.get(s)?.name).join(' + ')}</div>
                   <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -260,7 +260,7 @@ export default function ListDetailPage() {
                 <summary className="cursor-pointer text-sm font-semibold">Ajustar deslocamento e preferência</summary>
                 <div className="mt-4 flex flex-col gap-3">
                   <TextField
-                    label="Custo de cada mercado a mais"
+                    label="Custo de cada lugar a mais"
                     prefix="R$"
                     inputMode="decimal"
                     defaultValue={toInputDecimal(settings.tripCost)}
@@ -271,7 +271,7 @@ export default function ListDetailPage() {
                     hint="Combustível, estacionamento, tempo. Entra no cálculo da compra dividida."
                   />
                   <Toggle
-                    label="Prefiro comprar em um só mercado"
+                    label="Prefiro comprar em um só lugar"
                     description={`Só sugere dividir se economizar pelo menos ${money(settings.minSplitSavings)}.`}
                     checked={settings.preferSingleStore}
                     onChange={(v) => update({ preferSingleStore: v })}
@@ -300,7 +300,7 @@ export default function ListDetailPage() {
           <Button
             size="sm"
             icon={<ShoppingCart className="h-4 w-4" />}
-            onClick={() => navigate(`/compras/nova?lista=${list.id}${rec?.kind === 'single' ? `&mercado=${rec.stores[0]}` : ''}`)}
+            onClick={() => navigate(`/compras/nova?lista=${list.id}${rec?.kind === 'single' ? `&lugar=${rec.stores[0]}` : ''}`)}
           >
             Registrar compra dos marcados
           </Button>

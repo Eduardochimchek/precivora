@@ -9,12 +9,23 @@ const stamps = { createdAt: iso, updatedAt: iso };
 const money = z.number().finite().min(0).max(1_000_000);
 const rating = z.number().int().min(1).max(5);
 
-export const categorySchema = z.object({ id, name: z.string().min(1).max(60), color, ...stamps });
+export const segmentSchema = z.object({
+  id,
+  name: z.string().min(1).max(40),
+  icon: z.string().min(1).max(30),
+  color,
+  mode: z.enum(['items', 'fuel']),
+  builtin: z.boolean(),
+  order: z.number().int().min(0).max(10_000),
+  ...stamps,
+});
+export const categorySchema = z.object({ id, name: z.string().min(1).max(60), color, segmentId: id.optional(), ...stamps });
 export const brandSchema = z.object({ id, name: z.string().min(1).max(80), nameKey: z.string().max(80), ...stamps });
 export const productSchema = z.object({
   id,
   name: z.string().min(1).max(120),
   nameKey: z.string().max(120),
+  segmentId: id.optional(),
   brandId: id.optional(),
   categoryId: id.optional(),
   subcategory: text(60),
@@ -31,9 +42,11 @@ export const productSchema = z.object({
   archived: z.boolean(),
   ...stamps,
 });
-const place = {
+export const placeSchema = z.object({
   id,
+  segmentId: id,
   name: z.string().min(1).max(100),
+  flag: text(60),
   address: text(200),
   neighborhood: text(80),
   city: text(80),
@@ -41,9 +54,7 @@ const place = {
   color,
   active: z.boolean(),
   ...stamps,
-};
-export const storeSchema = z.object(place);
-export const stationSchema = z.object({ ...place, flag: text(60) });
+});
 export const priceSchema = z.object({
   id,
   productId: id,
@@ -102,7 +113,7 @@ export const listItemSchema = z.object({
 export const categoryBudgetSchema = z.object({ id, categoryId: id, limit: money });
 export const activitySchema = z.object({
   id,
-  kind: z.enum(['price', 'fuel', 'purchase', 'product', 'store', 'station', 'review', 'list', 'backup']),
+  kind: z.enum(['price', 'fuel', 'purchase', 'product', 'store', 'station', 'segment', 'review', 'list', 'backup']),
   label: z.string().max(200),
   refId: id.optional(),
   createdAt: iso,
@@ -110,11 +121,11 @@ export const activitySchema = z.object({
 export const settingSchema = z.object({ key: z.string().min(1).max(40), value: z.unknown() });
 
 export const tableSchemas = {
+  segments: segmentSchema,
   categories: categorySchema,
   brands: brandSchema,
   products: productSchema,
-  stores: storeSchema,
-  stations: stationSchema,
+  stores: placeSchema,
   prices: priceSchema,
   fuelPrices: fuelPriceSchema,
   reviews: reviewSchema,

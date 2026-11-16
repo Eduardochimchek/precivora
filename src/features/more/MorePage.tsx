@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { AlertTriangle, ChevronRight, Download, Fuel, Package, Settings, ShieldCheck, Smartphone, Star, Store, Tags, Wallet } from 'lucide-react';
+import { AlertTriangle, ChevronRight, Download, Fuel, LayoutList, MapPin, Package, Settings, ShieldCheck, Smartphone, Star, Tags, Wallet } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { Button, Card, Logo } from '@/design-system';
 import { useSettings } from '@/app/SettingsContext';
@@ -10,9 +10,9 @@ const GROUPS = [
   {
     title: 'Cadastros',
     links: [
+      { to: '/lugares', label: 'Lugares', icon: MapPin },
       { to: '/produtos', label: 'Produtos', icon: Package },
-      { to: '/mercados', label: 'Mercados', icon: Store },
-      { to: '/postos', label: 'Postos de combustível', icon: Fuel },
+      { to: '/tipos', label: 'Tipos de lugar', icon: LayoutList },
       { to: '/marcas', label: 'Marcas e categorias', icon: Tags },
     ],
   },

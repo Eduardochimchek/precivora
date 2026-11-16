@@ -7,7 +7,7 @@ Descubra onde comprar, o que comprar e quanto economizar.</p>
 
 ---
 
-O **Precivora** é um app de inteligência de consumo **local-first**: você anota os preços que encontra em mercados e postos, avalia o que compra e o app mostra onde está mais barato, quanto você economiza e qual produto vale mais a pena. Não precisa de conta nem de internet. **Os dados ficam no seu aparelho.**
+O **Precivora** é um app de inteligência de consumo **local-first**: você anota os preços que encontra (no mercado, na farmácia, no posto ou em qualquer lugar que quiser cadastrar), avalia o que compra e o app mostra onde está mais barato, quanto você economiza e qual produto vale mais a pena. Não precisa de conta nem de internet. **Os dados ficam no seu aparelho.**
 
 <p align="center">
   <img src="docs/screenshots/05-inicio.png" width="200" alt="Início" />
@@ -25,13 +25,14 @@ O **Precivora** é um app de inteligência de consumo **local-first**: você ano
 | Módulo | O que tem |
 |---|---|
 | **Início** | Economia estimada do mês, orçamento, oportunidades (produtos abaixo da sua média), combustível mais barato, últimos preços e atividade. Onboarding quando o banco está vazio. |
-| **Mercados e produtos** | Cadastro ilimitado de mercados (com cor, bairro, cidade, ativo/inativo) e produtos (marca, categoria, subcategoria, código de barras, foto, embalagem em kg/g/L/ml/unidade/pacote/caixa/dúzia). Arquivar, editar e excluir. |
+| **Lugares e tipos** | Mercado, Farmácia e Combustível vêm prontos; você cria outros tipos (Pet shop, Padaria, Construção…) com ícone e cor. Lugares ilimitados de cada tipo, com cor, bairro, cidade e ativo/inativo. |
+| **Itens** | Cadastro genérico: só o nome é obrigatório, foto opcional. Em “Mais detalhes”: marca, categoria (por tipo de lugar), código de barras e embalagem em kg/g/L/ml/unidade/pacote/caixa/dúzia para comparar por unidade. Arquivar, editar e excluir. |
 | **Registro de preço** | Formulário rápido com busca de produto, “salvar e próximo”, preço por unidade calculado na hora e variação contra o último preço (ex.: R$ 25,90 → R$ 23,90 = −7,72%). Suporta “leve 3 por R$ 10”. |
-| **Comparador** | Busca, filtros (categoria, marca, mercado, período, faixa de preço, promoções) e ordenação. Separa **menor preço recente**, **menor histórico** e **preço confirmado em compra**; marca preços desatualizados; avisa quando produtos medidos de jeitos diferentes não são comparáveis. |
+| **Comparador** | Filtro por tipo de lugar, busca, filtros (categoria, marca, lugar, período, faixa de preço, promoções) e ordenação. Separa **menor preço recente**, **menor histórico** e **preço confirmado em compra**; marca preços desatualizados; avisa quando produtos medidos de jeitos diferentes não são comparáveis. |
 | **Sugestões** | Ranking explicado que combina sua nota, o preço por unidade, a tendência e suas preferências (favorito, “não comprar novamente”). Um produto barato com nota ruim não é recomendado em primeiro. |
-| **Combustíveis** | Postos com bandeira, sete combustíveis, ranking do último preço anotado por posto, diferença por litro, economia em 30/40/50 L (configurável) e calculadora flex com rendimento editável (70% é só referência) ou por km/L. |
+| **Combustíveis** | Tipo especializado: postos com bandeira, sete combustíveis, ranking do último preço anotado por posto, diferença por litro, economia em 30/40/50 L (configurável) e calculadora flex com rendimento editável (70% é só referência) ou por km/L. |
 | **Avaliações** | Notas pessoais de produto e de marca (geral, qualidade, custo-benefício), comentário, favorito e “não comprar novamente”. |
-| **Listas** | Itens com quantidade e prioridade, marcar comprado, duplicar, arquivar. Comparador da lista inteira: total por mercado, compra dividida otimizada **com custo de deslocamento** e preferência por um único mercado. |
+| **Listas** | Itens com quantidade e prioridade, marcar comprado, duplicar, arquivar. Comparador da lista inteira: total por lugar (pode misturar mercado e farmácia), compra dividida otimizada **com custo de deslocamento** e preferência por um único lugar. |
 | **Histórico** | Compras reais (viram preço confirmado), gasto por mês, categorias com mais gastos, produtos que mais subiram e caíram, exportação CSV. |
 | **Orçamento** | Orçamento mensal, meta de economia e limite por categoria com alerta em 80% e 100%. |
 | **Backup** | Exporta tudo em JSON; importa validando estrutura, versão e integridade, mostrando o resumo antes; modos *mesclar* (sem duplicar) e *substituir tudo*. |
@@ -67,7 +68,7 @@ O build é estático (`dist/`) e usa rotas com `#`, então funciona em qualquer 
 - Sem login, sem servidor, sem anúncios, sem rastreadores, sem chamadas de rede com seus dados.
 - Tudo fica no **IndexedDB** do navegador. O app pede armazenamento persistente para reduzir o risco de o navegador apagar os dados.
 - Limpar os dados do navegador ou trocar de aparelho **apaga os registros**. Por isso o app lembra de fazer backup e mostra quando foi o último.
-- O único link externo é o “Abrir no mapa” de um mercado ou posto com endereço, e só quando você toca nele.
+- O único link externo é o “Abrir no mapa” de um lugar com endereço, e só quando você toca nele.
 
 ## Arquitetura
 

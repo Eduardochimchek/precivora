@@ -25,6 +25,8 @@ export interface Category extends Timestamps {
   id: ID;
   name: string;
   color: string;
+  /** Segmento a que a categoria pertence; vazio = vale para todos. */
+  segmentId?: ID;
 }
 
 export interface Brand extends Timestamps {
@@ -37,6 +39,8 @@ export interface Product extends Timestamps {
   id: ID;
   name: string;
   nameKey: string;
+  /** Segmento onde costuma ser comprado (opcional; o item pode ter preço em qualquer lugar). */
+  segmentId?: ID;
   brandId?: ID;
   categoryId?: ID;
   subcategory?: string;
@@ -51,35 +55,46 @@ export interface Product extends Timestamps {
   archived: boolean;
 }
 
-export interface Store extends Timestamps {
+export type SegmentMode = 'items' | 'fuel';
+
+/** Tipo de lugar (Mercado, Farmácia, Combustível, Pet shop...). "fuel" ativa as telas de combustível. */
+export interface Segment extends Timestamps {
   id: ID;
   name: string;
-  address?: string;
-  neighborhood?: string;
-  city?: string;
-  notes?: string;
+  /** Chave do ícone (ver SEGMENT_ICONS). */
+  icon: string;
   color: string;
-  active: boolean;
+  mode: SegmentMode;
+  /** Segmentos que vêm com o app: podem ser renomeados, não excluídos. */
+  builtin: boolean;
+  order: number;
 }
 
-export interface Station extends Timestamps {
+/** Lugar onde se compra ou abastece (mercado, farmácia, posto...). */
+export interface Place extends Timestamps {
   id: ID;
+  segmentId: ID;
   name: string;
   address?: string;
   neighborhood?: string;
   city?: string;
-  /** Bandeira (Ipiranga, Shell, bandeira branca...) */
+  /** Bandeira (só para postos). */
   flag?: string;
   notes?: string;
   color: string;
   active: boolean;
 }
 
+/** Nomes antigos mantidos para legibilidade: mercados e postos são lugares. */
+export type Store = Place;
+export type Station = Place;
+
 export type PriceSource = 'manual' | 'purchase';
 
 export interface PriceRecord extends Timestamps {
   id: ID;
   productId: ID;
+  /** Lugar (tabela `stores`). */
   storeId: ID;
   /** Valor total pago/anunciado para `quantity` embalagens. */
   price: number;
@@ -94,6 +109,7 @@ export interface PriceRecord extends Timestamps {
 
 export interface FuelPrice extends Timestamps {
   id: ID;
+  /** Lugar de um segmento de combustível (tabela `stores`). */
   stationId: ID;
   fuel: FuelType;
   /** Preço por litro (ou por m³ no caso do GNV). */
@@ -167,6 +183,7 @@ export type ActivityKind =
   | 'product'
   | 'store'
   | 'station'
+  | 'segment'
   | 'review'
   | 'list'
   | 'backup';

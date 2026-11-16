@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Pencil, Plus, Star, Tags, Trash2 } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
-import { Button, Card, EmptyState, IconButton, ListSkeleton, Section, Segmented, Sheet, Stars, TextField, useFeedback, cx } from '@/design-system';
+import { Button, Card, EmptyState, IconButton, ListSkeleton, Section, Segmented, SelectField, Sheet, Stars, TextField, useFeedback, cx } from '@/design-system';
 import { useActions } from '@/features/forms/ActionsContext';
-import { useBrands, useCategories, useProducts, useReviews } from '@/hooks/useData';
+import { useBrands, useCategories, useMapById, useProducts, useReviews, useSegments } from '@/hooks/useData';
 import { brandRating } from '@/services/recommendations';
 import { deleteBrand, deleteCategory, ensureBrand, renameBrand, saveCategory } from '@/repositories/catalog';
 import type { ID } from '@/types';
@@ -18,7 +18,9 @@ export default function BrandsPage() {
   const products = useProducts();
   const reviews = useReviews();
   const [tab, setTab] = useState<'marcas' | 'categorias'>('marcas');
-  const [editing, setEditing] = useState<{ kind: 'brand' | 'category'; id?: ID; name: string; color?: string } | null>(null);
+  const segmentsList = useSegments();
+  const segments = useMapById(segmentsList);
+  const [editing, setEditing] = useState<{ kind: 'brand' | 'category'; id?: ID; name: string; color?: string; segmentId?: ID } | null>(null);
 
   async function save() {
     if (!editing) return;
@@ -26,7 +28,7 @@ export default function BrandsPage() {
       if (editing.kind === 'brand') {
         if (editing.id) await renameBrand(editing.id, editing.name);
         else await ensureBrand(editing.name);
-      } else await saveCategory({ id: editing.id, name: editing.name, color: editing.color ?? CAT_COLORS[0] });
+      } else await saveCategory({ id: editing.id, name: editing.name, color: editing.color ?? CAT_COLORS[0], segmentId: editing.segmentId });
       toast('Salvo');
       setEditing(null);
     } catch (err) {
@@ -110,9 +112,11 @@ export default function BrandsPage() {
                 <span className="h-3 w-3 rounded-full" style={{ background: c.color }} aria-hidden />
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-semibold">{c.name}</div>
-                  <div className="text-xs text-muted">{n} produto{n === 1 ? '' : 's'}</div>
+                  <div className="text-xs text-muted">
+                    {c.segmentId ? (segments.get(c.segmentId)?.name ?? 'Todos os tipos') : 'Todos os tipos'} · {n} produto{n === 1 ? '' : 's'}
+                  </div>
                 </div>
-                <IconButton label={`Editar ${c.name}`} onClick={() => setEditing({ kind: 'category', id: c.id, name: c.name, color: c.color })}>
+                <IconButton label={`Editar ${c.name}`} onClick={() => setEditing({ kind: 'category', id: c.id, name: c.name, color: c.color, segmentId: c.segmentId })}>
                   <Pencil className="h-4 w-4" />
                 </IconButton>
                 <IconButton
@@ -151,6 +155,18 @@ export default function BrandsPage() {
             }}
           >
             <TextField label="Nome" value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} maxLength={80} data-autofocus />
+            {editing.kind === 'category' && (
+              <SelectField label="Tipo de lugar" value={editing.segmentId ?? ''} onChange={(e) => setEditing({ ...editing, segmentId: e.target.value || undefined })}>
+                <option value="">Todos os tipos</option>
+                {segmentsList
+                  ?.filter((s) => s.mode === 'items')
+                  .map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+              </SelectField>
+            )}
             {editing.kind === 'category' && (
               <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Cor">
                 {CAT_COLORS.map((c) => (

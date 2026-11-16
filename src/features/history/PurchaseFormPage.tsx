@@ -3,9 +3,10 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Plus, ShoppingCart, Trash2 } from 'lucide-react';
 import { db } from '@/db/database';
 import { PageHeader } from '@/components/PageHeader';
-import { Button, Card, EmptyState, IconButton, ListSkeleton, SelectField, TextField, TextareaField, useFeedback } from '@/design-system';
+import { Button, Card, EmptyState, IconButton, ListSkeleton, TextField, TextareaField, useFeedback } from '@/design-system';
 import { ProductPicker } from '@/features/forms/ProductPicker';
 import { useActions } from '@/features/forms/ActionsContext';
+import { PlaceSelect } from '@/features/forms/PlaceSelect';
 import { useBrands, useMapById, usePrices, useProducts, useStores } from '@/hooks/useData';
 import { deletePurchase, purchaseTotal, savePurchase } from '@/repositories/purchases';
 import { byRecent } from '@/services/comparison';
@@ -33,7 +34,7 @@ export default function PurchaseFormPage() {
   const brands = useMapById(useBrands());
   const stores = useStores();
   const prices = usePrices();
-  const [storeId, setStoreId] = useState<ID | ''>(params.get('mercado') ?? '');
+  const [storeId, setStoreId] = useState<ID | ''>((params.get('lugar') ?? params.get('mercado')) ?? '');
   const [date, setDate] = useState(toDateInput());
   const [notes, setNotes] = useState('');
   const [rows, setRows] = useState<Row[]>([]);
@@ -78,7 +79,7 @@ export default function PurchaseFormPage() {
         .filter((i) => i.checked)
         .toArray()
         .then((its) => {
-          const store = params.get('mercado') ?? '';
+          const store = (params.get('lugar') ?? params.get('mercado')) ?? '';
           setRows(
             its.map((i) => {
               const lp = lastPrice(i.productId, store);
@@ -101,7 +102,7 @@ export default function PurchaseFormPage() {
 
   async function submit() {
     const errs: Record<string, string> = {};
-    if (!storeId) errs.store = 'Escolha o mercado';
+    if (!storeId) errs.store = 'Escolha o lugar';
     if (!rows.length) errs.items = 'Adicione ao menos um produto';
     parsed.forEach((r) => {
       if (!(r.q > 0)) errs[`q-${r.key}`] = 'Qtd.';
@@ -138,25 +139,10 @@ export default function PurchaseFormPage() {
   return (
     <div className="flex flex-col gap-5">
       <PageHeader back title={id ? 'Editar compra' : 'Nova compra'} subtitle="Os preços pagos entram no histórico como preço confirmado em compra." />
-      <div className="grid grid-cols-2 gap-3">
-        <SelectField label="Mercado" value={storeId} onChange={(e) => setStoreId(e.target.value)} error={errors.store}>
-          <option value="" disabled>
-            Escolha
-          </option>
-          {stores.filter((s) => s.active || s.id === storeId).map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </SelectField>
+      <div className="grid gap-3 sm:grid-cols-[1fr_200px]">
+        <PlaceSelect value={storeId} onChange={setStoreId} error={errors.store} />
         <TextField label="Data" type="date" value={date} max={toDateInput()} onChange={(e) => setDate(e.target.value)} />
       </div>
-      {!stores.length && (
-        <Button variant="secondary" onClick={() => actions.openPlace({ kind: 'store', onSaved: setStoreId })}>
-          Cadastrar mercado
-        </Button>
-      )}
-
       <ProductPicker
         label="Adicionar produto"
         products={products}

@@ -102,7 +102,7 @@ export default function BackupPage() {
       <Section title="Exportar" id="exportar">
         <Card className="flex flex-col gap-3 p-4">
           <p className="text-sm text-muted">
-            Gera um arquivo .json com produtos, mercados, postos, preços, avaliações, listas, compras e configurações. Guarde em um lugar seguro (nuvem, e-mail para você mesmo).
+            Gera um arquivo .json com produtos, lugares, preços, avaliações, listas, compras e configurações. Guarde em um lugar seguro (nuvem, e-mail para você mesmo).
           </p>
           <p className="text-sm">
             {last ? (

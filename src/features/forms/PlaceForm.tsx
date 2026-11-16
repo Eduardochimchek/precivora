@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { db } from '@/db/database';
-import type { ID, Station } from '@/types';
-import { Button, Sheet, TextField, TextareaField, Toggle, useFeedback } from '@/design-system';
-import { saveStation, saveStore } from '@/repositories/places';
+import type { ID, SegmentMode } from '@/types';
+import { Button, SegmentIcon, Sheet, TextField, TextareaField, Toggle, cx, useFeedback } from '@/design-system';
+import { useSegments } from '@/hooks/useData';
+import { savePlace } from '@/repositories/places';
 import { ColorSwatches, PLACE_COLORS } from './ColorSwatches';
 
 const FLAGS = ['Petrobras', 'Ipiranga', 'Shell', 'Ale', 'Bandeira branca'];
@@ -10,13 +11,18 @@ const FLAGS = ['Petrobras', 'Ipiranga', 'Shell', 'Ale', 'Bandeira branca'];
 export interface PlaceFormProps {
   open: boolean;
   onClose: () => void;
-  kind: 'store' | 'station';
   placeId?: ID;
+  /** Tipo sugerido para um lugar novo. */
+  segmentId?: ID;
+  /** Restringe os tipos oferecidos (ex.: só postos ao vir do formulário de combustível). */
+  mode?: SegmentMode;
   onSaved?: (id: ID) => void;
 }
 
-export function PlaceForm({ open, onClose, kind, placeId, onSaved }: PlaceFormProps) {
+export function PlaceForm({ open, onClose, placeId, segmentId: initialSegment, mode, onSaved }: PlaceFormProps) {
   const { toast } = useFeedback();
+  const segments = (useSegments() ?? []).filter((s) => !mode || s.mode === mode);
+  const [segmentId, setSegmentId] = useState<ID>('');
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [neighborhood, setNeighborhood] = useState('');
@@ -27,25 +33,28 @@ export function PlaceForm({ open, onClose, kind, placeId, onSaved }: PlaceFormPr
   const [active, setActive] = useState(true);
   const [error, setError] = useState<string>();
   const [saving, setSaving] = useState(false);
-  const isStore = kind === 'store';
 
   useEffect(() => {
     if (!open) return;
     setError(undefined);
-    const reset = async () => {
-      const p = placeId ? await (isStore ? db.stores.get(placeId) : db.stations.get(placeId)) : undefined;
-      const count = await (isStore ? db.stores.count() : db.stations.count());
+    void (async () => {
+      const p = placeId ? await db.stores.get(placeId) : undefined;
+      const count = await db.stores.count();
+      const segs = (await db.segments.orderBy('order').toArray()).filter((s) => !mode || s.mode === mode);
+      setSegmentId(p?.segmentId ?? initialSegment ?? segs[0]?.id ?? '');
       setName(p?.name ?? '');
       setAddress(p?.address ?? '');
       setNeighborhood(p?.neighborhood ?? '');
       setCity(p?.city ?? '');
-      setFlag((p as Station | undefined)?.flag ?? '');
+      setFlag(p?.flag ?? '');
       setNotes(p?.notes ?? '');
       setColor(p?.color ?? PLACE_COLORS[count % PLACE_COLORS.length]);
       setActive(p?.active ?? true);
-    };
-    void reset();
-  }, [open, placeId, isStore]);
+    })();
+  }, [open, placeId, initialSegment, mode]);
+
+  const segment = segments.find((s) => s.id === segmentId);
+  const isFuel = segment?.mode === 'fuel';
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -55,9 +64,8 @@ export function PlaceForm({ open, onClose, kind, placeId, onSaved }: PlaceFormPr
     }
     setSaving(true);
     try {
-      const input = { name, address, neighborhood, city, notes, color, active, flag };
-      const id = isStore ? await saveStore(input, placeId) : await saveStation(input, placeId);
-      toast(placeId ? 'Alterações salvas' : isStore ? 'Mercado cadastrado' : 'Posto cadastrado');
+      const id = await savePlace({ segmentId, name, address, neighborhood, city, notes, color, active, flag }, placeId);
+      toast(placeId ? 'Alterações salvas' : 'Lugar cadastrado');
       onSaved?.(id);
       onClose();
     } catch (err) {
@@ -67,12 +75,11 @@ export function PlaceForm({ open, onClose, kind, placeId, onSaved }: PlaceFormPr
     }
   }
 
-  const title = placeId ? (isStore ? 'Editar mercado' : 'Editar posto') : isStore ? 'Novo mercado' : 'Novo posto';
   return (
     <Sheet
       open={open}
       onClose={onClose}
-      title={title}
+      title={placeId ? 'Editar lugar' : 'Novo lugar'}
       dismissible={false}
       footer={
         <>
@@ -86,16 +93,39 @@ export function PlaceForm({ open, onClose, kind, placeId, onSaved }: PlaceFormPr
       }
     >
       <form id="place-form" onSubmit={submit} className="flex flex-col gap-4" noValidate>
+        {segments.length > 1 && (
+          <fieldset>
+            <legend className="mb-2 text-sm font-semibold">Tipo</legend>
+            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Tipo de lugar">
+              {segments.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={segmentId === s.id}
+                  onClick={() => setSegmentId(s.id)}
+                  className={cx(
+                    'flex h-10 items-center gap-2 rounded-full border px-3.5 text-sm font-semibold transition-colors',
+                    segmentId === s.id ? 'border-transparent bg-primary text-on-primary' : 'border-line text-muted hover:text-ink',
+                  )}
+                >
+                  <SegmentIcon icon={s.icon} />
+                  {s.name}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+        )}
         <TextField
           label="Nome"
           value={name}
           onChange={(e) => setName(e.target.value)}
           error={error}
-          placeholder={isStore ? 'Ex.: Mercado do bairro' : 'Ex.: Posto da avenida'}
+          placeholder={isFuel ? 'Ex.: Posto da avenida' : segment ? `Ex.: ${segment.name} do bairro` : 'Ex.: Mercado do bairro'}
           maxLength={100}
           data-autofocus
         />
-        {!isStore && (
+        {isFuel && (
           <>
             <TextField label="Bandeira" optional value={flag} onChange={(e) => setFlag(e.target.value)} list="flag-options" maxLength={60} />
             <datalist id="flag-options">{FLAGS.map((f) => <option key={f} value={f} />)}</datalist>
@@ -109,7 +139,7 @@ export function PlaceForm({ open, onClose, kind, placeId, onSaved }: PlaceFormPr
         <ColorSwatches value={color} onChange={setColor} />
         <Toggle
           label="Ativo"
-          description={isStore ? 'Inativos não entram na comparação de listas.' : 'Inativos ficam fora do ranking de preços.'}
+          description={isFuel ? 'Inativos ficam fora do ranking de preços.' : 'Inativos não entram na comparação de listas.'}
           checked={active}
           onChange={setActive}
         />

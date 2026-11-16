@@ -140,7 +140,7 @@ export function FuelPriceForm({ open, onClose, stationId: initialStation, fuel: 
             className="h-12 w-12 px-0"
             aria-label="Cadastrar posto"
             title="Cadastrar posto"
-            onClick={() => actions.openPlace({ kind: 'station', onSaved: setStationId })}
+            onClick={() => actions.openPlace({ mode: 'fuel', onSaved: setStationId })}
           >
             <Plus className="h-5 w-5" />
           </Button>

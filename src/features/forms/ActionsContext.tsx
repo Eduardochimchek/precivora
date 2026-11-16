@@ -1,20 +1,20 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
-import type { FuelType, ID, ReviewTarget } from '@/types';
+import type { FuelType, ID, ReviewTarget, SegmentMode } from '@/types';
 import { ProductForm } from './ProductForm';
 import { PlaceForm } from './PlaceForm';
 import { PriceForm } from './PriceForm';
 import { FuelPriceForm } from './FuelPriceForm';
 import { ReviewForm } from './ReviewForm';
 
-interface ProductOpts { productId?: ID; initialName?: string; onSaved?: (id: ID) => void }
-interface PlaceOpts { kind: 'store' | 'station'; placeId?: ID; onSaved?: (id: ID) => void }
+interface ProductOpts { productId?: ID; initialName?: string; segmentId?: ID; onSaved?: (id: ID) => void }
+interface PlaceOpts { placeId?: ID; segmentId?: ID; mode?: SegmentMode; onSaved?: (id: ID) => void }
 interface PriceOpts { productId?: ID; storeId?: ID; priceId?: ID }
 interface FuelOpts { stationId?: ID; fuel?: FuelType; recordId?: ID }
 interface ReviewOpts { targetType: ReviewTarget; targetId: ID }
 
 interface ActionsApi {
   openProduct: (o?: ProductOpts) => void;
-  openPlace: (o: PlaceOpts) => void;
+  openPlace: (o?: PlaceOpts) => void;
   openPrice: (o?: PriceOpts) => void;
   openFuel: (o?: FuelOpts) => void;
   openReview: (o: ReviewOpts) => void;
@@ -33,7 +33,7 @@ export function ActionsProvider({ children }: { children: ReactNode }) {
   const api = useMemo<ActionsApi>(
     () => ({
       openProduct: (o = {}) => setProduct(o),
-      openPlace: (o) => setPlace(o),
+      openPlace: (o = {}) => setPlace(o),
       openPrice: (o = {}) => setPrice(o),
       openFuel: (o = {}) => setFuel(o),
       openReview: (o) => setReview(o),
@@ -48,7 +48,7 @@ export function ActionsProvider({ children }: { children: ReactNode }) {
       <FuelPriceForm open={!!fuel} onClose={() => setFuel(null)} {...(fuel ?? {})} />
       {review && <ReviewForm open onClose={() => setReview(null)} {...review} />}
       <ProductForm open={!!product} onClose={() => setProduct(null)} {...(product ?? {})} />
-      <PlaceForm open={!!place} onClose={() => setPlace(null)} kind={place?.kind ?? 'store'} placeId={place?.placeId} onSaved={place?.onSaved} />
+      <PlaceForm open={!!place} onClose={() => setPlace(null)} {...(place ?? {})} />
     </Ctx.Provider>
   );
 }

@@ -6,6 +6,7 @@ import {
   ChevronRight,
   Fuel,
   ListChecks,
+  MapPin,
   Package,
   PackagePlus,
   ShieldCheck,
@@ -35,6 +36,7 @@ const ACTIVITY_ICON: Record<ActivityKind, typeof Tag> = {
   product: Package,
   store: Store,
   station: Fuel,
+  segment: Store,
   review: Star,
   list: ListChecks,
   backup: ShieldCheck,
@@ -134,13 +136,13 @@ export function DashboardPage() {
             <Shortcut icon={Fuel} label="Combustível" onClick={() => actions.openFuel()} />
             <Shortcut icon={ShoppingCart} label="Nova compra" to="/compras/nova" />
             <Shortcut icon={PackagePlus} label="Produto" onClick={() => actions.openProduct()} />
-            <Shortcut icon={Store} label="Mercado" onClick={() => actions.openPlace({ kind: 'store' })} />
+            <Shortcut icon={MapPin} label="Lugar" onClick={() => actions.openPlace({ mode: 'items' })} />
           </nav>
 
           <dl className="grid grid-cols-3 divide-x divide-line rounded-lg bg-surface py-4 shadow-card">
             <Counter label="Produtos" value={products!.filter((p) => !p.archived).length} to="/produtos" />
             <Counter label="Preços" value={prices!.length + fuelPrices!.length} to="/comparar" />
-            <Counter label="Lugares" value={stores!.length + stations!.length} to="/mercados" />
+            <Counter label="Lugares" value={stores!.length + stations!.length} to="/lugares" />
           </dl>
 
           <div className="grid gap-8 xl:grid-cols-2 xl:items-start">
@@ -208,7 +210,7 @@ export function DashboardPage() {
               </div>
             ) : (
               <button
-                onClick={() => (stations!.length ? actions.openFuel() : actions.openPlace({ kind: 'station' }))}
+                onClick={() => (stations!.length ? actions.openFuel() : actions.openPlace({ mode: 'fuel' }))}
                 className="flex w-full items-center gap-3 rounded-lg bg-surface p-4 text-left shadow-card hover:bg-sunken"
               >
                 <Fuel className="h-5 w-5 text-accent" aria-hidden />
@@ -374,7 +376,7 @@ function Onboarding({ onName, initialName }: { onName: (n: string) => void; init
         <LogoSymbol className="h-12 w-12 text-[#F7F9FC]" accentClass="text-lime" />
         <h2 className="mt-5 text-[28px] font-bold leading-tight">Descubra onde comprar, o que comprar e quanto economizar.</h2>
         <p className="mt-3 max-w-md text-sm text-[#CBD5E1]">
-          Anote os preços que você vê, compare mercados e postos e avalie o que compra. Sem cadastro e sem internet: tudo fica guardado neste aparelho.
+          Anote os preços que você vê, compare mercados, farmácias, postos e o que mais quiser, e avalie o que compra. Sem cadastro e sem internet: tudo fica guardado neste aparelho.
         </p>
         <form
           className="mt-5 flex max-w-sm items-end gap-2 [&_input]:border-white/15 [&_input]:bg-white/10 [&_input]:text-white [&_label]:text-[#CBD5E1]"
@@ -395,12 +397,12 @@ function Onboarding({ onName, initialName }: { onName: (n: string) => void; init
           Comece em três passos
         </h2>
         <ol className="flex flex-col gap-2">
-          <Step n={1} title="Cadastre os mercados que você frequenta" onClick={() => actions.openPlace({ kind: 'store' })} icon={Store} />
+          <Step n={1} title="Cadastre os lugares onde você compra" onClick={() => actions.openPlace({ mode: 'items' })} icon={Store} />
           <Step n={2} title="Cadastre os produtos que você compra" onClick={() => actions.openProduct()} icon={Package} />
           <Step n={3} title="Registre os preços que encontrar" onClick={() => actions.openPrice()} icon={Tag} />
         </ol>
         <button
-          onClick={() => actions.openPlace({ kind: 'station' })}
+          onClick={() => actions.openPlace({ mode: 'fuel' })}
           className="mt-3 flex w-full items-center gap-3 rounded-lg border border-dashed border-line p-4 text-left text-sm hover:bg-sunken"
         >
           <Fuel className="h-5 w-5 text-accent" aria-hidden />

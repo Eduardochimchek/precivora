@@ -13,9 +13,9 @@ const ComparePage = lazy(() => import('@/features/compare/ComparePage'));
 const ProductDetailPage = lazy(() => import('@/features/products/ProductDetailPage'));
 const ProductsPage = lazy(() => import('@/features/products/ProductsPage'));
 const FuelPage = lazy(() => import('@/features/fuel/FuelPage'));
-const StationDetailPage = lazy(() => import('@/features/fuel/StationDetailPage'));
 const PlacesPage = lazy(() => import('@/features/places/PlacesPage'));
-const StoreDetailPage = lazy(() => import('@/features/places/StoreDetailPage'));
+const PlaceDetailPage = lazy(() => import('@/features/places/PlaceDetailPage'));
+const SegmentsPage = lazy(() => import('@/features/places/SegmentsPage'));
 const ListsPage = lazy(() => import('@/features/lists/ListsPage'));
 const ListDetailPage = lazy(() => import('@/features/lists/ListDetailPage'));
 const HistoryPage = lazy(() => import('@/features/history/HistoryPage'));
@@ -63,10 +63,13 @@ export default function App({ settings }: { settings: Settings }) {
                     <Route path="produtos/:id" element={<ProductDetailPage />} />
                     <Route path="precos/novo" element={<QuickPrice />} />
                     <Route path="combustiveis" element={<FuelPage />} />
-                    <Route path="postos" element={<PlacesPage kind="station" />} />
-                    <Route path="postos/:id" element={<StationDetailPage />} />
-                    <Route path="mercados" element={<PlacesPage kind="store" />} />
-                    <Route path="mercados/:id" element={<StoreDetailPage />} />
+                    <Route path="lugares" element={<PlacesPage />} />
+                    <Route path="lugares/:id" element={<PlaceDetailPage />} />
+                    <Route path="tipos" element={<SegmentsPage />} />
+                    <Route path="mercados" element={<Navigate to="/lugares?tipo=seg-mercado" replace />} />
+                    <Route path="postos" element={<Navigate to="/lugares?tipo=seg-combustivel" replace />} />
+                    <Route path="mercados/:id" element={<PlaceDetailPage />} />
+                    <Route path="postos/:id" element={<PlaceDetailPage />} />
                     <Route path="listas" element={<ListsPage />} />
                     <Route path="listas/:id" element={<ListDetailPage />} />
                     <Route path="historico" element={<HistoryPage />} />

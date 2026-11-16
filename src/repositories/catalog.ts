@@ -9,6 +9,7 @@ import { logActivity } from './activity';
 
 export interface ProductInput {
   name: string;
+  segmentId?: ID;
   brandName?: string;
   brandId?: ID;
   categoryId?: ID;
@@ -51,15 +52,15 @@ export async function deleteBrand(id: ID): Promise<void> {
   });
 }
 
-export async function saveCategory(input: { id?: ID; name: string; color: string }): Promise<ID> {
+export async function saveCategory(input: { id?: ID; name: string; color: string; segmentId?: ID }): Promise<ID> {
   const now = nowISO();
   const name = cleanText(input.name, 60);
   if (!name) throw new ValidationError('Informe o nome da categoria');
   if (input.id) {
-    await db.categories.update(input.id, { name, color: input.color, updatedAt: now });
+    await db.categories.update(input.id, { name, color: input.color, segmentId: input.segmentId || undefined, updatedAt: now });
     return input.id;
   }
-  const c: Category = validate(categorySchema, { id: newId(), name, color: input.color, createdAt: now, updatedAt: now });
+  const c: Category = validate(categorySchema, { id: newId(), name, color: input.color, segmentId: input.segmentId || undefined, createdAt: now, updatedAt: now });
   await db.categories.add(c);
   return c.id;
 }
@@ -88,6 +89,7 @@ export async function saveProduct(input: ProductInput, id?: ID): Promise<ID> {
     id: id ?? newId(),
     name,
     nameKey: searchKey(name),
+    segmentId: input.segmentId || undefined,
     brandId,
     categoryId: input.categoryId || undefined,
     subcategory: cleanText(input.subcategory, 60),

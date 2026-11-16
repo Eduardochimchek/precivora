@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { AlertTriangle, Ban, Heart, Info, Plus, Scale, Search, SlidersHorizontal, Sparkles, X } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
-import { Button, Chip, EmptyState, IconButton, ListSkeleton, PriceTag, Segmented, SelectField, Stars, TextField, Toggle, cx } from '@/design-system';
+import { Button, Chip, EmptyState, IconButton, ListSkeleton, PriceTag, SelectField, Stars, TextField, Toggle, cx } from '@/design-system';
 import { useActions } from '@/features/forms/ActionsContext';
+import { SegmentTabs } from './SegmentTabs';
 import { useSettings } from '@/app/SettingsContext';
 import { useBrands, useCategories, useMapById, usePrices, useProducts, useReviews, useStores } from '@/hooks/useData';
 import { productStats, type ProductStats } from '@/services/comparison';
@@ -24,10 +25,11 @@ const PERIODS = [
 ];
 
 export default function ComparePage() {
-  const navigate = useNavigate();
   const { settings } = useSettings();
   const actions = useActions();
   const [params, setParams] = useSearchParams();
+  const query = params.get('q') ?? '';
+  const segment = params.get('tipo') ?? '';
   const products = useProducts();
   const prices = usePrices();
   const reviews = useReviews();
@@ -36,8 +38,8 @@ export default function ComparePage() {
   const categories = useCategories();
   const stores = useStores();
   const storeMap = useMapById(stores);
+  const visibleStores = (stores ?? []).filter((s) => !segment || s.segmentId === segment);
 
-  const query = params.get('q') ?? '';
   const [showFilters, setShowFilters] = useState(false);
   const [categoryId, setCategoryId] = useState('');
   const [brandId, setBrandId] = useState('');
@@ -53,8 +55,14 @@ export default function ComparePage() {
   const filteredPrices = useMemo(() => {
     if (!prices) return undefined;
     const since = Number(period) > 0 ? new Date(Date.now() - Number(period) * 86_400_000).toISOString() : '';
-    return prices.filter((r) => (!storeId || r.storeId === storeId) && (!since || r.date >= since) && (!promoOnly || r.promo));
-  }, [prices, storeId, period, promoOnly]);
+    return prices.filter(
+      (r) =>
+        (!storeId || r.storeId === storeId) &&
+        (!segment || storeMap.get(r.storeId)?.segmentId === segment) &&
+        (!since || r.date >= since) &&
+        (!promoOnly || r.promo),
+    );
+  }, [prices, storeId, period, promoOnly, segment, storeMap]);
 
   const rows = useMemo(() => {
     if (!products || !filteredPrices) return undefined;
@@ -65,6 +73,7 @@ export default function ComparePage() {
     const hasPriceFilter = storeId || period !== '0' || promoOnly || min > 0 || max > 0;
     return products
       .filter((p) => !p.archived)
+      .filter((p) => !segment || p.segmentId === segment || byProduct.has(p.id))
       .filter((p) => !categoryId || p.categoryId === categoryId)
       .filter((p) => !brandId || p.brandId === brandId)
       .filter((p) => matches(`${p.name} ${brands.get(p.brandId ?? '')?.name ?? ''} ${p.subcategory ?? ''} ${p.barcode ?? ''}`, query))
@@ -74,7 +83,7 @@ export default function ComparePage() {
         const ref = r.stats ? (r.stats.recentMin ?? r.stats.historicMin).packagePrice : NaN;
         return (!(min > 0) || ref >= min) && (!(max > 0) || ref <= max);
       });
-  }, [products, filteredPrices, categoryId, brandId, storeId, period, promoOnly, minPrice, maxPrice, query, brands, settings.staleDays]);
+  }, [products, filteredPrices, segment, categoryId, brandId, storeId, period, promoOnly, minPrice, maxPrice, query, brands, settings.staleDays]);
 
   const suggestions = useMemo(() => {
     if (!rows || !reviews || !filteredPrices || !brandsList) return [];
@@ -108,16 +117,17 @@ export default function ComparePage() {
   return (
     <div>
       <PageHeader title="Comparar" subtitle="Preços, unidades e avaliações dos produtos que você acompanha." />
-      <Segmented
-        label="O que comparar"
-        value="mercado"
-        onChange={(v) => v === 'combustivel' && navigate('/combustiveis')}
-        options={[
-          { value: 'mercado', label: 'Mercado' },
-          { value: 'combustivel', label: 'Combustível' },
-        ]}
-        className="mb-4"
-      />
+      <div className="mb-3">
+        <SegmentTabs
+          active={segment}
+          onSelect={(id) => {
+            const next = new URLSearchParams(params);
+            if (id) next.set('tipo', id);
+            else next.delete('tipo');
+            setParams(next, { replace: true });
+          }}
+        />
+      </div>
 
       <div className="sticky top-0 z-20 -mx-4 bg-bg/95 px-4 pb-3 pt-[max(.5rem,env(safe-area-inset-top))] backdrop-blur md:static md:mx-0 md:bg-transparent md:px-0 md:pt-0">
         <div className="flex gap-2">
@@ -128,11 +138,24 @@ export default function ComparePage() {
               aria-label="Buscar produto"
               placeholder="Buscar produto, marca ou código"
               value={query}
-              onChange={(e) => setParams(e.target.value ? { q: e.target.value } : {}, { replace: true })}
+              onChange={(e) => {
+                const next = new URLSearchParams(params);
+                if (e.target.value) next.set('q', e.target.value);
+                else next.delete('q');
+                setParams(next, { replace: true });
+              }}
               className="h-12 w-full rounded-md border border-line bg-surface pl-10 pr-10 text-[15px] focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25"
             />
             {query && (
-              <IconButton label="Limpar busca" className="absolute right-0.5 top-0.5" onClick={() => setParams({}, { replace: true })}>
+              <IconButton
+                label="Limpar busca"
+                className="absolute right-0.5 top-0.5"
+                onClick={() => {
+                  const next = new URLSearchParams(params);
+                  next.delete('q');
+                  setParams(next, { replace: true });
+                }}
+              >
                 <X className="h-4 w-4" />
               </IconButton>
             )}
@@ -185,9 +208,9 @@ export default function ComparePage() {
             <option value="">Todas</option>
             {brandsList?.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
           </SelectField>
-          <SelectField label="Mercado" value={storeId} onChange={(e) => setStoreId(e.target.value)}>
+          <SelectField label="Lugar" value={storeId} onChange={(e) => setStoreId(e.target.value)}>
             <option value="">Todos</option>
-            {stores?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+            {visibleStores.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </SelectField>
           <SelectField label="Período" value={period} onChange={(e) => setPeriod(e.target.value)}>
             {PERIODS.map((p) => <option key={p.v} value={p.v}>{p.l}</option>)}
@@ -224,7 +247,7 @@ export default function ComparePage() {
           title="Nada para comparar ainda"
           action={<Button icon={<Plus className="h-4 w-4" />} onClick={() => actions.openProduct()}>Cadastrar produto</Button>}
         >
-          Cadastre produtos e registre preços em mais de um mercado para ver quem cobra menos.
+          Cadastre produtos e registre preços em mais de um lugar para ver quem cobra menos.
         </EmptyState>
       ) : (
         <div className="flex flex-col gap-6">
@@ -252,7 +275,7 @@ export default function ComparePage() {
             </div>
           )}
 
-          {dims.size > 1 && (
+          {dims.size > 1 && query.trim() && (
             <p className="flex items-start gap-2 rounded-lg bg-warn/[.08] p-3 text-xs text-ink">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warn" aria-hidden />
               Os resultados misturam {[...dims].map((d) => DIMENSION_NAME[d]).join(', ')}. O preço por unidade só é comparável entre produtos medidos do mesmo jeito.
@@ -272,7 +295,7 @@ export default function ComparePage() {
                     stats={stats}
                     brand={product.brandId ? brands.get(product.brandId)?.name : undefined}
                     suggestion={suggestionBy.get(product.id)?.s}
-                    storeName={(id) => storeMap.get(id)?.name ?? 'mercado'}
+                    storeName={(id) => storeMap.get(id)?.name ?? 'lugar'}
                     staleDays={settings.staleDays}
                   />
                 ))}
@@ -397,7 +420,7 @@ function ResultRow({
           <div className="flex shrink-0 flex-col items-end gap-1">
             <PriceTag value={money(ref.packagePrice)} tone={isRecent ? 'best' : 'plain'} size="sm" />
             <span className="price text-[11px] text-muted">{formatUnitPrice(ref.unitPrice, product.unit)}</span>
-            {stats!.byStore.length > 1 && <span className="text-[11px] text-muted">{stats!.byStore.length} mercados</span>}
+            {stats!.byStore.length > 1 && <span className="text-[11px] text-muted">{stats!.byStore.length} lugares</span>}
           </div>
         )}
       </Link>

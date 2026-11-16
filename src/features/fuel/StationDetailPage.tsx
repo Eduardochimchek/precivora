@@ -10,7 +10,7 @@ import { useFuelPrices } from '@/hooks/useData';
 import { FUEL_LABEL, fuelUnit, rankStations } from '@/services/fuel';
 import { byRecent, priceChange } from '@/services/comparison';
 import { deleteFuelPrice } from '@/repositories/prices';
-import { deleteStation } from '@/repositories/places';
+import { deletePlace } from '@/repositories/places';
 import { FUEL_TYPES } from '@/types';
 import { formatDateTime, relativeDays } from '@/utils/date';
 import { money3 } from '@/utils/format';
@@ -20,7 +20,7 @@ export default function StationDetailPage() {
   const navigate = useNavigate();
   const actions = useActions();
   const { toast, confirm } = useFeedback();
-  const station = useLiveQuery(() => db.stations.get(id).then((s) => s ?? null), [id]);
+  const station = useLiveQuery(() => db.stores.get(id).then((s) => s ?? null), [id]);
   const all = useFuelPrices();
   const mine = useMemo(() => (all ?? []).filter((r) => r.stationId === id).sort(byRecent), [all, id]);
 
@@ -28,7 +28,7 @@ export default function StationDetailPage() {
   if (station === null)
     return (
       <div className="pt-9">
-        <EmptyState icon={<Fuel className="h-6 w-6" />} title="Posto não encontrado" action={<Button onClick={() => navigate('/postos')}>Ver postos</Button>} />
+        <EmptyState icon={<Fuel className="h-6 w-6" />} title="Posto não encontrado" action={<Button onClick={() => navigate('/lugares')}>Ver lugares</Button>} />
       </div>
     );
 
@@ -46,7 +46,7 @@ export default function StationDetailPage() {
           </span>
         }
         actions={
-          <IconButton label="Editar posto" onClick={() => actions.openPlace({ kind: 'station', placeId: station.id })}>
+          <IconButton label="Editar posto" onClick={() => actions.openPlace({ placeId: station.id })}>
             <Pencil className="h-5 w-5" />
           </IconButton>
         }
@@ -140,9 +140,9 @@ export default function StationDetailPage() {
           icon={<Trash2 className="h-4 w-4" />}
           onClick={async () => {
             if (await confirm({ title: `Excluir ${station.name}?`, message: `Os ${mine.length} preços deste posto também serão apagados.`, confirmLabel: 'Excluir', danger: true })) {
-              await deleteStation(station.id);
+              await deletePlace(station.id);
               toast('Posto excluído');
-              navigate('/postos', { replace: true });
+              navigate('/lugares', { replace: true });
             }
           }}
         >

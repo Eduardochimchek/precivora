@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Fuel, History, House, LayoutGrid, ListChecks, Package, Scale, Settings, Store, Wallet } from 'lucide-react';
+import { Fuel, History, House, LayoutGrid, ListChecks, MapPin, Package, Scale, Settings, Wallet } from 'lucide-react';
 import { useEffect } from 'react';
 import { Logo, cx } from '@/design-system';
 
@@ -14,7 +14,7 @@ const MAIN = [
 const SIDE_EXTRA = [
   { to: '/combustiveis', label: 'Combustíveis', icon: Fuel },
   { to: '/produtos', label: 'Produtos', icon: Package },
-  { to: '/mercados', label: 'Mercados', icon: Store },
+  { to: '/lugares', label: 'Lugares', icon: MapPin },
   { to: '/orcamento', label: 'Orçamento', icon: Wallet },
   { to: '/ajustes', label: 'Ajustes', icon: Settings },
 ];
@@ -24,7 +24,7 @@ const SECTION: [RegExp, string][] = [
   [/^\/(comparar|combustiveis|produtos\/)/, '/comparar'],
   [/^\/listas/, '/listas'],
   [/^\/(historico|compras)/, '/historico'],
-  [/^\/(mais|mercados|postos|produtos$|marcas|avaliacoes|orcamento|backup|ajustes)/, '/mais'],
+  [/^\/(mais|lugares|tipos|mercados|postos|produtos$|marcas|avaliacoes|orcamento|backup|ajustes)/, '/mais'],
 ];
 
 export function AppShell() {

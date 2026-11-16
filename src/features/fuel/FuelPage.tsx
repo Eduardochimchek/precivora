@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Calculator, Fuel, MapPin, Plus } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
-import { Button, Card, ChangeBadge, Chip, EmptyState, ListSkeleton, PlaceMark, PriceTag, Section, Segmented, TextField, cx } from '@/design-system';
+import { Button, Card, ChangeBadge, Chip, EmptyState, ListSkeleton, PlaceMark, PriceTag, Section, TextField, cx } from '@/design-system';
 import { useActions } from '@/features/forms/ActionsContext';
+import { SegmentTabs } from '@/features/compare/SegmentTabs';
 import { useSettings } from '@/app/SettingsContext';
 import { useFuelPrices, useMapById, useStations } from '@/hooks/useData';
 import { FUEL_LABEL, FUEL_SHORT, flexCompare, fuelUnit, rankStations, tankSavings } from '@/services/fuel';
@@ -14,7 +15,6 @@ import { money, money3, parseDecimal, percent, toInputDecimal } from '@/utils/fo
 const FUEL_STALE_DAYS = 7;
 
 export default function FuelPage() {
-  const navigate = useNavigate();
   const actions = useActions();
   const [params, setParams] = useSearchParams();
   const stations = useStations();
@@ -40,16 +40,9 @@ export default function FuelPage() {
           </Button>
         }
       />
-      <Segmented
-        label="O que comparar"
-        value="combustivel"
-        onChange={(v) => v === 'mercado' && navigate('/comparar')}
-        options={[
-          { value: 'mercado', label: 'Mercado' },
-          { value: 'combustivel', label: 'Combustível' },
-        ]}
-        className="-mt-2"
-      />
+      <div className="-mt-2">
+        <SegmentTabs active="fuel" />
+      </div>
 
       {!stations || !records ? (
         <ListSkeleton />
@@ -57,7 +50,7 @@ export default function FuelPage() {
         <EmptyState
           icon={<Fuel className="h-6 w-6" />}
           title="Nenhum posto cadastrado"
-          action={<Button onClick={() => actions.openPlace({ kind: 'station' })}>Cadastrar posto</Button>}
+          action={<Button onClick={() => actions.openPlace({ mode: 'fuel' })}>Cadastrar posto</Button>}
         >
           Cadastre os postos do seu caminho e anote o preço da bomba quando passar por eles.
         </EmptyState>
@@ -90,7 +83,7 @@ export default function FuelPage() {
                 {ranking.map((q, i) => {
                   const st = stationMap.get(q.stationId)!;
                   return (
-                    <Link key={q.stationId} to={`/postos/${q.stationId}`} className={cx('flex items-center gap-3 px-4 py-3.5 hover:bg-sunken', i === 0 && 'bg-lime/[.07]')}>
+                    <Link key={q.stationId} to={`/lugares/${q.stationId}`} className={cx('flex items-center gap-3 px-4 py-3.5 hover:bg-sunken', i === 0 && 'bg-lime/[.07]')}>
                       <PlaceMark name={st.name} color={st.color} size={38} />
                       <div className="min-w-0 flex-1">
                         <div className="truncate font-semibold">{st.name}</div>
@@ -158,7 +151,7 @@ export default function FuelPage() {
 
           <FlexCalculator records={activeRecords} ratio={settings.flexRatio} />
 
-          <Link to="/postos" className="flex items-center gap-3 rounded-lg border border-line p-4 text-sm font-semibold hover:bg-sunken">
+          <Link to="/lugares?tipo=seg-combustivel" className="flex items-center gap-3 rounded-lg border border-line p-4 text-sm font-semibold hover:bg-sunken">
             <MapPin className="h-5 w-5 text-accent" aria-hidden />
             Gerenciar postos ({stations.length})
           </Link>

@@ -47,6 +47,7 @@ const browser = await chromium.launch();
 const errors = [];
 const mobile = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: 'pt-BR', colorScheme: 'light' });
 page = await mobile.newPage();
+page.setDefaultTimeout(10000);
 page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
 page.on('pageerror', (e) => errors.push(e.message));
 const shot = (name) => page.screenshot({ path: join(SHOTS, `${name}.png`), fullPage: true });
@@ -66,18 +67,20 @@ try {
     await shot('01-onboarding');
   });
 
-  await step('cadastra mercado pela interface', async () => {
-    await page.getByRole('button', { name: 'Cadastre os mercados que você frequenta' }).click();
+  await step('cadastra lugar (tipo Mercado) pela interface', async () => {
+    await page.getByRole('button', { name: 'Cadastre os lugares onde você compra' }).click();
+    assert((await page.getByRole('radio', { name: 'Mercado' }).getAttribute('aria-checked')) === 'true', 'tipo Mercado não veio marcado');
     await page.getByLabel('Nome').fill('Mercado Teste');
     await page.getByLabel('Bairro (opcional)').fill('Centro');
     await page.getByRole('button', { name: 'Cadastrar', exact: true }).click();
-    await page.waitForSelector('text=Mercado cadastrado');
+    await page.waitForSelector('text=Lugar cadastrado');
   });
 
   await step('cadastra produto com marca e embalagem', async () => {
     await page.getByRole('button', { name: 'Atalhos' }).count().catch(() => 0);
     await page.getByRole('button', { name: 'Produto', exact: true }).click();
     await page.getByLabel('Nome', { exact: true }).fill('Açúcar refinado');
+    await page.getByRole('button', { name: /Mais detalhes/ }).click();
     await page.getByLabel('Marca (opcional)').fill('Doce Lar');
     await page.getByLabel('Conteúdo da embalagem').fill('2');
     await page.getByLabel('Unidade', { exact: true }).selectOption('kg');
@@ -90,14 +93,14 @@ try {
     await page.getByRole('button', { name: 'Registrar preço' }).first().click();
     await page.getByRole('combobox', { name: 'Produto' }).fill('acucar');
     await page.getByRole('option', { name: /Açúcar refinado/ }).click();
-    await page.getByLabel('Mercado', { exact: true }).selectOption({ label: 'Mercado Teste' });
+    await page.getByLabel('Lugar', { exact: true }).selectOption({ label: 'Mercado Teste' });
     await page.getByLabel('Preço', { exact: true }).fill('9,98');
     await page.getByRole('button', { name: 'Salvar preço' }).click();
     await page.waitForSelector('text=Preço registrado');
     await page.getByRole('button', { name: 'Registrar preço' }).first().click();
     await page.getByRole('combobox', { name: 'Produto' }).fill('açúcar');
     await page.getByRole('option', { name: /Açúcar refinado/ }).click();
-    await page.getByLabel('Mercado', { exact: true }).selectOption({ label: 'Mercado Teste' });
+    await page.getByLabel('Lugar', { exact: true }).selectOption({ label: 'Mercado Teste' });
     await page.getByLabel('Preço', { exact: true }).fill('8,98');
     await page.waitForSelector('text=Último preço');
     const txt = (await page.locator('form#price-form').innerText()).replace(/\u00a0/g, ' ');
@@ -144,6 +147,48 @@ try {
     assert(dl.suggestedFilename().startsWith('precivora-backup-'), 'nome do arquivo inesperado');
   });
 
+  await step('cadastro genérico: item só com nome, tipo novo e lugar dele', async () => {
+    await go('/tipos');
+    await page.getByRole('button', { name: 'Novo', exact: true }).click();
+    await page.getByLabel('Nome').fill('Pet shop');
+    await page.getByRole('radio', { name: 'Pet' }).click();
+    await page.getByRole('button', { name: 'Salvar' }).click();
+    await page.waitForSelector('text=Tipo criado');
+    await go('/lugares');
+    await page.getByRole('button', { name: 'Novo', exact: true }).click();
+    await page.getByRole('radio', { name: 'Pet shop' }).click();
+    await page.getByLabel('Nome').fill('Pet do Bairro');
+    await page.getByRole('button', { name: 'Cadastrar', exact: true }).click();
+    await page.waitForSelector('text=Lugar cadastrado');
+    await go('/produtos');
+    await page.getByRole('button', { name: 'Novo', exact: true }).click();
+    await page.getByLabel('Nome', { exact: true }).fill('Ração 10 kg');
+    await page.getByRole('radio', { name: 'Pet shop' }).click();
+    await page.getByRole('button', { name: 'Cadastrar produto' }).click();
+    await page.waitForSelector('text=Produto cadastrado');
+    await page.getByRole('link', { name: /Ração 10 kg/ }).click();
+    await page.getByRole('button', { name: 'Registrar preço' }).first().click();
+    await page.getByLabel('Lugar', { exact: true }).selectOption({ label: 'Pet do Bairro' });
+    await page.getByLabel('Preço', { exact: true }).fill('149,90');
+    await page.getByRole('button', { name: 'Salvar preço' }).click();
+    await page.waitForSelector('text=Preço registrado');
+    await go('/comparar');
+    await page.getByRole('tab', { name: 'Pet shop' }).click();
+    await page.waitForSelector('text=Ração 10 kg');
+    const txt = (await page.locator('main').innerText()).replace(/\u00a0/g, ' ');
+    assert(!txt.includes('Arroz'), 'filtro por tipo mostrou itens de outro tipo');
+    assert(txt.includes('R$ 149,90'), 'preço do item genérico não apareceu');
+    await shot('18-comparar-pet');
+  });
+
+  await step('comparador filtra Farmácia', async () => {
+    await go('/comparar?tipo=seg-farmacia');
+    await page.waitForSelector('text=Dipirona');
+    const txt = await page.locator('main').innerText();
+    assert(!txt.includes('Feijão'), 'itens de mercado apareceram no filtro Farmácia');
+    await shot('19-comparar-farmacia');
+  });
+
   await step('define orçamento pela interface', async () => {
     await go('/orcamento');
     await page.getByLabel('Orçamento mensal', { exact: true }).fill('900');
@@ -155,7 +200,7 @@ try {
 
   await step('registra compra pela interface e gera preço confirmado', async () => {
     await go('/compras/nova');
-    await page.getByLabel('Mercado', { exact: true }).selectOption({ label: 'Mercado Teste' });
+    await page.getByLabel('Lugar', { exact: true }).selectOption({ label: 'Mercado Teste' });
     await page.getByRole('combobox', { name: 'Adicionar produto' }).fill('açúcar');
     await page.getByRole('option', { name: /Açúcar refinado/ }).click();
     const unit = page.getByLabel('Preço unit.');
@@ -185,7 +230,7 @@ try {
 
   await step('ficha do produto com estatísticas e gráfico', async () => {
     await page.locator('section[aria-labelledby="sugestoes"] li a').first().click();
-    await page.waitForSelector('text=Por mercado');
+    await page.waitForSelector('text=Por lugar');
     await page.waitForSelector('.recharts-surface');
     await shot('07-produto');
   });
@@ -205,7 +250,7 @@ try {
     await page.getByRole('link', { name: /Compra do mês/ }).click();
     await page.waitForSelector('text=Onde comprar');
     const txt = await page.locator('main').innerText();
-    assert(/Melhor mercado único|Compra dividida/.test(txt), 'sem recomendação');
+    assert(/Melhor lugar único|Compra dividida/.test(txt), 'sem recomendação');
     await page.getByRole('checkbox').first().click();
     await shot('09-lista');
   });
@@ -221,7 +266,9 @@ try {
     ['/mais', '12-mais', 'Cadastros'],
     ['/avaliacoes', '13-avaliacoes', 'Rende bem'],
     ['/marcas', '14-marcas', 'Grão Fino'],
-    ['/mercados', '15-mercados', 'Atacarejo Rota 5'],
+    ['/mercados', '15-lugares-mercado', 'Atacarejo Rota 5'],
+    ['/lugares', '15b-lugares', 'Drogaria Central'],
+    ['/tipos', '15c-tipos', 'Farmácia'],
     ['/ajustes', '16-ajustes', 'Privacidade'],
     ['/compras/nova', '17-nova-compra', 'Nova compra'],
   ]) {

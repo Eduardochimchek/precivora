@@ -78,7 +78,7 @@ export async function saveFuelPrice(input: FuelPriceInput, id?: ID): Promise<Fue
   });
   await db.fuelPrices.put(record);
   if (!id) {
-    const station = await db.stations.get(record.stationId);
+    const station = await db.stores.get(record.stationId);
     await logActivity('fuel', `${FUEL_LABEL[record.fuel]} ${money3(record.price)} · ${station?.name ?? 'posto'}`, record.id);
   }
   return record;

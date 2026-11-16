@@ -9,7 +9,7 @@ import { useActions } from '@/features/forms/ActionsContext';
 import { useSettings } from '@/app/SettingsContext';
 import { usePrices, useProducts } from '@/hooks/useData';
 import { productStats } from '@/services/comparison';
-import { deleteStore } from '@/repositories/places';
+import { deletePlace } from '@/repositories/places';
 import { formatUnitPrice, packageLabel } from '@/services/units';
 import { relativeDays } from '@/utils/date';
 import { money } from '@/utils/format';
@@ -23,6 +23,7 @@ export default function StoreDetailPage() {
   const { settings } = useSettings();
   const store = useLiveQuery(() => db.stores.get(id).then((s) => s ?? null), [id]);
   const purchases = useLiveQuery(() => db.purchases.where('storeId').equals(id).toArray(), [id]);
+  const segment = useLiveQuery(() => (store ? db.segments.get(store.segmentId) : undefined), [store?.segmentId]);
   const prices = usePrices();
   const products = useProducts();
 
@@ -44,7 +45,7 @@ export default function StoreDetailPage() {
   if (store === null)
     return (
       <div className="pt-9">
-        <EmptyState icon={<StoreIcon className="h-6 w-6" />} title="Mercado não encontrado" action={<Button onClick={() => navigate('/mercados')}>Ver mercados</Button>} />
+        <EmptyState icon={<StoreIcon className="h-6 w-6" />} title="Lugar não encontrado" action={<Button onClick={() => navigate('/lugares')}>Ver lugares</Button>} />
       </div>
     );
 
@@ -54,15 +55,15 @@ export default function StoreDetailPage() {
   async function remove() {
     const ok = await confirm({
       title: `Excluir ${store!.name}?`,
-      message: `Os ${rows.length ? 'preços registrados neste mercado também serão apagados' : 'dados deste mercado serão apagados'}. Se ele só fechou ou você parou de ir, marque como inativo.`,
+      message: `Os ${rows.length ? 'preços registrados neste lugar também serão apagados' : 'dados deste lugar serão apagados'}. Se ele só fechou ou você parou de ir, marque como inativo.`,
       confirmLabel: 'Excluir',
       danger: true,
     });
     if (!ok) return;
     try {
-      await deleteStore(store!.id);
-      toast('Mercado excluído');
-      navigate('/mercados', { replace: true });
+      await deletePlace(store!.id);
+      toast('Lugar excluído');
+      navigate('/lugares', { replace: true });
     } catch (err) {
       toast((err as Error).message, 'error');
     }
@@ -76,11 +77,11 @@ export default function StoreDetailPage() {
         subtitle={
           <span className="flex flex-wrap items-center gap-2">
             {!store.active && <Chip>inativo</Chip>}
-            {[store.address, store.neighborhood, store.city].filter(Boolean).join(', ') || 'Sem endereço'}
+            {[segment?.name, [store.address, store.neighborhood, store.city].filter(Boolean).join(', ') || 'Sem endereço'].filter(Boolean).join(' · ')}
           </span>
         }
         actions={
-          <IconButton label="Editar mercado" onClick={() => actions.openPlace({ kind: 'store', placeId: store.id })}>
+          <IconButton label="Editar lugar" onClick={() => actions.openPlace({ placeId: store.id })}>
             <Pencil className="h-5 w-5" />
           </IconButton>
         }
@@ -97,13 +98,13 @@ export default function StoreDetailPage() {
         <Button className="flex-1" icon={<Tag className="h-4 w-4" />} onClick={() => actions.openPrice({ storeId: store.id })}>
           Registrar preço aqui
         </Button>
-        <Button variant="secondary" icon={<ShoppingCart className="h-4 w-4" />} onClick={() => navigate(`/compras/nova?mercado=${store.id}`)}>
+        <Button variant="secondary" icon={<ShoppingCart className="h-4 w-4" />} onClick={() => navigate(`/compras/nova?lugar=${store.id}`)}>
           Compra
         </Button>
       </div>
       {store.notes && <p className="rounded-lg bg-surface p-4 text-sm text-muted shadow-card">{store.notes}</p>}
 
-      <Section title="Preços neste mercado" id="precos-mercado">
+      <Section title="Preços neste lugar" id="precos-mercado">
         {rows.length ? (
           <Card className="divide-y divide-line">
             {rows.map(({ p, here, cheapest, others, s }) => (
@@ -141,7 +142,7 @@ export default function StoreDetailPage() {
           </a>
         )}
         <Button variant="ghost" size="sm" className="text-danger" icon={<Trash2 className="h-4 w-4" />} onClick={remove}>
-          Excluir mercado
+          Excluir lugar
         </Button>
       </div>
     </div>

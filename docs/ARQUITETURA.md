@@ -20,11 +20,12 @@ features (telas) ──lê──▶ hooks/useData (useLiveQuery) ──▶ db (D
 
 | Tabela | Conteúdo | Índices principais |
 |---|---|---|
-| `products` | produto, embalagem, marca, categoria | `nameKey`, `brandId`, `categoryId`, `barcode` |
-| `brands`, `categories` | marcas e categorias | `nameKey` / `name` |
-| `stores`, `stations` | mercados e postos | `name` |
+| `segments` | tipos de lugar (Mercado, Farmácia, Combustível + criados pelo usuário); `mode: 'fuel'` ativa as telas de combustível | `order` |
+| `stores` | **todos os lugares** (mercados, farmácias, postos…), cada um com `segmentId` | `name`, `segmentId` |
+| `products` | item genérico (só o nome é obrigatório), embalagem, marca, categoria, tipo de lugar | `nameKey`, `brandId`, `categoryId`, `barcode`, `segmentId` |
+| `brands`, `categories` | marcas e categorias (categoria pode ser de um tipo de lugar) | `nameKey` / `name`, `segmentId` |
 | `prices` | preço anotado ou confirmado em compra (`source`) | `productId`, `storeId`, `[productId+date]`, `purchaseId` |
-| `fuelPrices` | preço de combustível com data e hora | `stationId`, `[fuel+date]` |
+| `fuelPrices` | preço de combustível com data e hora (`stationId` aponta para um lugar de tipo combustível) | `stationId`, `[fuel+date]` |
 | `reviews` | avaliação pessoal (uma por produto/marca) | `[targetType+targetId]` |
 | `purchases`, `purchaseItems` | compras reais | `storeId`, `date`, `purchaseId` |
 | `lists`, `listItems` | listas de compras | `listId` |
@@ -32,7 +33,7 @@ features (telas) ──lê──▶ hooks/useData (useLiveQuery) ──▶ db (D
 | `activities` | últimas atividades (máx. 300) | `createdAt` |
 | `settings` | preferências (chave/valor) | `key` |
 
-**Versionamento:** cada mudança de esquema ganha um `this.version(n)` com `upgrade()` em `db/database.ts` e o `SCHEMA_VERSION` sobe. A v2 já é uma migração real (chave de busca sem acentos em produtos e marcas). O backup grava o `schemaVersion`: arquivos antigos são migrados ao importar e arquivos de versões mais novas são recusados com uma mensagem clara.
+**Versionamento:** cada mudança de esquema ganha um `this.version(n)` com `upgrade()` em `db/database.ts` e o `SCHEMA_VERSION` sobe. A v2 criou a chave de busca sem acentos; a v3 criou os tipos de lugar, moveu os postos para `stores` com o tipo Combustível (mantendo os IDs, então preços e compras continuam ligados) e removeu a tabela `stations`. Os tipos padrão têm IDs fixos (`seg-mercado`, `seg-farmacia`, `seg-combustivel`) para backups de aparelhos diferentes se reconhecerem. O backup grava o `schemaVersion`: arquivos antigos são migrados ao importar e arquivos de versões mais novas são recusados com uma mensagem clara.
 
 **IDs** são UUID v4 gerados no aparelho. Isso permite mesclar backups sem colisão e, no futuro, sincronizar sem depender de um servidor para numerar registros.
 

@@ -11,24 +11,25 @@ import type {
   Purchase,
   PurchaseItem,
   Review,
+  Segment,
   SettingRow,
   ShoppingList,
-  Station,
   Store,
 } from '@/types';
 import { searchKey } from '@/utils/text';
-import { newId } from '@/utils/id';
+import { builtinSegmentRows, defaultCategoryRows, DEFAULT_CATEGORIES, SEG_COMBUSTIVEL, SEG_MERCADO } from './defaults';
 
 export const DB_NAME = 'precivora';
 /** Versão do esquema. Ao mudar, adicione um novo `this.version(n)` com `upgrade` e atualize o backup. */
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 export class PrecivoraDB extends Dexie {
   categories!: EntityTable<Category, 'id'>;
   brands!: EntityTable<Brand, 'id'>;
   products!: EntityTable<Product, 'id'>;
+  segments!: EntityTable<Segment, 'id'>;
+  /** Todos os lugares (mercados, farmácias, postos...), cada um com seu `segmentId`. */
   stores!: EntityTable<Store, 'id'>;
-  stations!: EntityTable<Station, 'id'>;
   prices!: EntityTable<PriceRecord, 'id'>;
   fuelPrices!: EntityTable<FuelPrice, 'id'>;
   reviews!: EntityTable<Review, 'id'>;
@@ -77,38 +78,53 @@ export class PrecivoraDB extends Dexie {
         });
       });
 
+    // v3 — segmentos (Mercado, Farmácia, Combustível + criados pelo usuário).
+    // Postos passam para a tabela de lugares com o segmento Combustível, mantendo os IDs.
+    this.version(3)
+      .stores({
+        segments: 'id, order',
+        stores: 'id, name, segmentId',
+        categories: 'id, name, segmentId',
+        products: 'id, name, nameKey, brandId, categoryId, barcode, segmentId',
+        stations: null,
+      })
+      .upgrade(async (tx) => {
+        const now = new Date().toISOString();
+        await tx.table('segments').bulkPut(builtinSegmentRows(now));
+        await tx.table('stores').toCollection().modify((p: Store) => {
+          if (!p.segmentId) p.segmentId = SEG_MERCADO;
+        });
+        const oldStations = await tx.table('stations').toArray();
+        if (oldStations.length) await tx.table('stores').bulkPut(oldStations.map((st) => ({ ...st, segmentId: SEG_COMBUSTIVEL })));
+        const segOf = new Map(DEFAULT_CATEGORIES.map(([n, , seg]) => [n, seg]));
+        const existing = new Set<string>();
+        await tx.table('categories').toCollection().modify((c: Category) => {
+          existing.add(c.name);
+          const seg = segOf.get(c.name);
+          if (seg && !c.segmentId) c.segmentId = seg;
+        });
+        const newOnes = new Set(DEFAULT_CATEGORIES.filter(([n, , seg]) => !existing.has(n) && seg && seg !== SEG_MERCADO).map(([n]) => n));
+        if (newOnes.size) await tx.table('categories').bulkAdd(defaultCategoryRows(now, newOnes));
+      });
+
     this.on('populate', (tx) => {
       const now = new Date().toISOString();
-      tx.table('categories').bulkAdd(
-        DEFAULT_CATEGORIES.map(([name, color]) => ({ id: newId(), name, color, createdAt: now, updatedAt: now })),
-      );
+      tx.table('segments').bulkAdd(builtinSegmentRows(now));
+      tx.table('categories').bulkAdd(defaultCategoryRows(now));
     });
   }
 }
 
-/** Categorias iniciais (dados de referência, editáveis pelo usuário). */
-export const DEFAULT_CATEGORIES: [string, string][] = [
-  ['Mercearia', '#D97706'],
-  ['Hortifrúti', '#16A34A'],
-  ['Carnes e peixes', '#DC2626'],
-  ['Laticínios e frios', '#0EA5E9'],
-  ['Padaria', '#A16207'],
-  ['Bebidas', '#7C3AED'],
-  ['Limpeza', '#0891B2'],
-  ['Higiene e beleza', '#DB2777'],
-  ['Bebê', '#F59E0B'],
-  ['Pet', '#65A30D'],
-  ['Utilidades', '#475569'],
-];
+export { DEFAULT_CATEGORIES } from './defaults';
 
 export const db = new PrecivoraDB();
 
 export const ALL_TABLES = [
+  'segments',
   'categories',
   'brands',
   'products',
   'stores',
-  'stations',
   'prices',
   'fuelPrices',
   'reviews',

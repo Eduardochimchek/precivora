@@ -151,7 +151,7 @@ export function optimizeList(items: OptimizerItem[], quotes: QuoteTable, storeId
       stores: split.stores,
       total: split.total,
       netSavings: 0,
-      reason: 'Nenhum mercado tem preço registrado de todos os itens; a combinação abaixo cobre a lista.',
+      reason: 'Nenhum lugar tem preço registrado de todos os itens; a combinação abaixo cobre a lista.',
     };
   } else {
     const netSavings = round(bestSingle.total - split.total);
@@ -165,7 +165,7 @@ export function optimizeList(items: OptimizerItem[], quotes: QuoteTable, storeId
         reason:
           split.stores.length > 1
             ? 'Dividir a compra não compensa depois de somar o custo de deslocamento.'
-            : 'Este mercado tem o menor total para a lista inteira.',
+            : 'Este lugar tem o menor total para a lista inteira.',
       };
     } else if (opts.preferSingleStore && netSavings < opts.minSplitSavings) {
       recommendation = {
@@ -173,7 +173,7 @@ export function optimizeList(items: OptimizerItem[], quotes: QuoteTable, storeId
         stores: [bestSingle.storeId],
         total: bestSingle.total,
         netSavings,
-        reason: `Dividir economizaria só ${netSavings.toFixed(2).replace('.', ',')} reais, abaixo do mínimo que você definiu para ir a mais de um mercado.`,
+        reason: `Dividir economizaria só ${netSavings.toFixed(2).replace('.', ',')} reais, abaixo do mínimo que você definiu para ir a mais de um lugar.`,
       };
     } else {
       recommendation = {
@@ -181,7 +181,7 @@ export function optimizeList(items: OptimizerItem[], quotes: QuoteTable, storeId
         stores: split.stores,
         total: split.total,
         netSavings,
-        reason: `Dividir entre ${split.stores.length} mercados economiza mesmo somando ${split.travelCost.toFixed(2).replace('.', ',')} reais de deslocamento.`,
+        reason: `Dividir entre ${split.stores.length} lugares economiza mesmo somando ${split.travelCost.toFixed(2).replace('.', ',')} reais de deslocamento.`,
       };
     }
   }

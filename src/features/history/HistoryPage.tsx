@@ -67,7 +67,7 @@ export default function HistoryPage() {
       downloadText(
         toCsv(items ?? [], [
           { header: 'Data', value: (i) => formatDate(byId.get(i.purchaseId)?.date ?? '') },
-          { header: 'Mercado', value: (i) => storeMap.get(byId.get(i.purchaseId)?.storeId ?? '')?.name },
+          { header: 'Lugar', value: (i) => storeMap.get(byId.get(i.purchaseId)?.storeId ?? '')?.name },
           { header: 'Produto', value: (i) => productMap.get(i.productId)?.name },
           { header: 'Quantidade', value: (i) => i.quantity },
           { header: 'Preço unitário', value: (i) => i.unitPrice },
@@ -82,7 +82,7 @@ export default function HistoryPage() {
           { header: 'Data', value: (r) => formatDate(r.date) },
           { header: 'Produto', value: (r) => productMap.get(r.productId)?.name },
           { header: 'Embalagem', value: (r) => { const p = productMap.get(r.productId); return p ? `${p.packageSize} ${UNIT_INFO[p.unit].label}` : ''; } },
-          { header: 'Mercado', value: (r) => storeMap.get(r.storeId)?.name },
+          { header: 'Lugar', value: (r) => storeMap.get(r.storeId)?.name },
           { header: 'Preço', value: (r) => r.price },
           { header: 'Embalagens', value: (r) => r.quantity },
           { header: 'Preço por embalagem', value: (r) => Math.round(packagePrice(r) * 100) / 100 },
@@ -232,7 +232,7 @@ export default function HistoryPage() {
                             <Link to={`/compras/${p.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-sunken">
                               <PlaceMark name={st?.name ?? '?'} color={st?.color ?? '#64748B'} size={36} />
                               <div className="min-w-0 flex-1">
-                                <div className="truncate font-semibold">{st?.name ?? 'Mercado removido'}</div>
+                                <div className="truncate font-semibold">{st?.name ?? 'Lugar removido'}</div>
                                 <div className="text-xs text-muted">
                                   {formatDate(p.date)} · {n} {n === 1 ? 'item' : 'itens'}
                                 </div>

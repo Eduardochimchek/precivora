@@ -1,4 +1,5 @@
 import { db, requestPersistentStorage } from '@/db/database';
+import { builtinSegmentRows } from '@/db/defaults';
 import { getSettings, saveSettings } from '@/repositories/settings';
 import { applyTheme, getThemePreference } from '@/services/theme';
 import type { Settings } from '@/types';
@@ -11,6 +12,10 @@ export interface BootResult {
 export async function boot(): Promise<BootResult> {
   if (typeof indexedDB === 'undefined') throw new Error('indexeddb-unavailable');
   await db.open();
+  const builtins = builtinSegmentRows(new Date().toISOString());
+  const existing = new Set(await db.segments.toCollection().primaryKeys());
+  const toAdd = builtins.filter((s) => !existing.has(s.id));
+  if (toAdd.length) await db.segments.bulkAdd(toAdd);
   const settings = await getSettings();
   const local = getThemePreference();
   if (settings.theme !== local) {

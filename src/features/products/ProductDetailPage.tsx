@@ -28,6 +28,7 @@ export default function ProductDetailPage() {
   const product = useLiveQuery(() => db.products.get(id).then((p) => p ?? null), [id]);
   const brand = useLiveQuery(() => (product?.brandId ? db.brands.get(product.brandId) : undefined), [product?.brandId]);
   const category = useLiveQuery(() => (product?.categoryId ? db.categories.get(product.categoryId) : undefined), [product?.categoryId]);
+  const segment = useLiveQuery(() => (product?.segmentId ? db.segments.get(product.segmentId) : undefined), [product?.segmentId]);
   const records = useLiveQuery(() => db.prices.where('productId').equals(id).toArray(), [id]);
   const review = useLiveQuery(() => db.reviews.where('[targetType+targetId]').equals(['product', id]).first(), [id]);
   const brandReview = useLiveQuery(
@@ -56,7 +57,7 @@ export default function ProductDetailPage() {
       </div>
     );
 
-  const storeName = (sid: string) => stores.get(sid)?.name ?? 'Mercado removido';
+  const storeName = (sid: string) => stores.get(sid)?.name ?? 'Lugar removido';
 
   async function remove() {
     const ok = await confirm({
@@ -88,7 +89,7 @@ export default function ProductDetailPage() {
         title={product.name}
         subtitle={
           <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            {[brand?.name, packageLabel(product), category?.name, product.subcategory].filter(Boolean).join(' · ')}
+            {[brand?.name, packageLabel(product), segment?.name, category?.name, product.subcategory].filter(Boolean).join(' · ')}
             {product.archived && <Chip tone="warn">arquivado</Chip>}
           </span>
         }
@@ -153,13 +154,13 @@ export default function ProductDetailPage() {
             )}
           </section>
 
-          <Section title="Por mercado" id="por-mercado">
+          <Section title="Por lugar" id="por-mercado">
             <Card className="divide-y divide-line">
               {stats.byStore.map((q, i) => {
                 const st = stores.get(q.storeId);
                 const diff = q.packagePrice - stats.byStore[0].packagePrice;
                 return (
-                  <Link key={q.storeId} to={`/mercados/${q.storeId}`} className="flex items-center gap-3 px-4 py-3 hover:bg-sunken">
+                  <Link key={q.storeId} to={`/lugares/${q.storeId}`} className="flex items-center gap-3 px-4 py-3 hover:bg-sunken">
                     <PlaceMark name={st?.name ?? '?'} color={st?.color ?? '#64748B'} size={34} />
                     <div className="min-w-0 flex-1">
                       <div className="truncate font-semibold">{storeName(q.storeId)}</div>
@@ -178,7 +179,7 @@ export default function ProductDetailPage() {
                 );
               })}
             </Card>
-            <p className="text-xs text-muted">Último preço registrado em cada mercado.</p>
+            <p className="text-xs text-muted">Último preço registrado em cada lugar.</p>
           </Section>
 
           {records.length > 1 && (
@@ -193,7 +194,7 @@ export default function ProductDetailPage() {
         </>
       ) : (
         <EmptyState icon={<Tag className="h-6 w-6" />} title="Sem preços ainda" action={<Button onClick={() => actions.openPrice({ productId: product.id })}>Registrar preço</Button>}>
-          Registre o preço deste produto nos mercados que você visita para comparar.
+          Registre o preço deste produto nos lugares que você visita para comparar.
         </EmptyState>
       )}
 

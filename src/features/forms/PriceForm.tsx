@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Plus } from 'lucide-react';
 import { db } from '@/db/database';
 import type { ID, PriceRecord } from '@/types';
-import { Button, ChangeBadge, SelectField, Sheet, TextField, TextareaField, Toggle, useFeedback } from '@/design-system';
+import { Button, ChangeBadge, Sheet, TextField, TextareaField, Toggle, useFeedback } from '@/design-system';
 import { useBrands, useMapById, useProducts, useStores } from '@/hooks/useData';
 import { savePrice } from '@/repositories/prices';
 import { compareWithLast } from '@/services/comparison';
@@ -12,6 +11,7 @@ import { formatDate, fromDateInput, toDateInput } from '@/utils/date';
 import { money, parseDecimal, toInputDecimal } from '@/utils/format';
 import { ProductPicker } from './ProductPicker';
 import { useActions } from './ActionsContext';
+import { PlaceSelect } from './PlaceSelect';
 
 export interface PriceFormProps {
   open: boolean;
@@ -84,7 +84,7 @@ export function PriceForm({ open, onClose, productId: initialProduct, storeId: i
   async function submit(again: boolean) {
     const errs: Record<string, string> = {};
     if (!productId) errs.product = 'Escolha o produto';
-    if (!storeId) errs.store = 'Escolha o mercado';
+    if (!storeId) errs.store = 'Escolha o lugar';
     if (!(value > 0)) errs.price = 'Informe o preço';
     if (!(qty > 0)) errs.quantity = 'Quantidade inválida';
     setErrors(errs);
@@ -108,7 +108,7 @@ export function PriceForm({ open, onClose, productId: initialProduct, storeId: i
     }
   }
 
-  const storeName = (id: ID) => stores.find((s) => s.id === id)?.name ?? 'outro mercado';
+  const storeName = (id: ID) => stores.find((s) => s.id === id)?.name ?? 'outro lugar';
 
   return (
     <Sheet
@@ -151,33 +151,7 @@ export function PriceForm({ open, onClose, productId: initialProduct, storeId: i
           autoFocus={!initialProduct && !priceId}
           onCreate={(name) => actions.openProduct({ initialName: name, onSaved: setProductId })}
         />
-        <div className="flex items-end gap-2">
-          <SelectField
-            label="Mercado"
-            value={storeId}
-            onChange={(e) => setStoreId(e.target.value)}
-            error={errors.store}
-            wrapperClassName="flex-1"
-          >
-            <option value="" disabled>
-              {stores.length ? 'Escolha o mercado' : 'Cadastre um mercado'}
-            </option>
-            {stores.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </SelectField>
-          <Button
-            variant="secondary"
-            className="mb-0 h-12 w-12 px-0"
-            aria-label="Cadastrar mercado"
-            title="Cadastrar mercado"
-            onClick={() => actions.openPlace({ kind: 'store', onSaved: setStoreId })}
-          >
-            <Plus className="h-5 w-5" />
-          </Button>
-        </div>
+        <PlaceSelect value={storeId} onChange={setStoreId} error={errors.store} keepId={initialStore} />
         <div className="grid grid-cols-[1fr_96px] gap-3">
           <TextField
             label="Preço"
@@ -212,7 +186,7 @@ export function PriceForm({ open, onClose, productId: initialProduct, storeId: i
                 <ChangeBadge change={comparison.change} />
               </div>
             ) : (
-              <p className="mt-2 text-xs text-muted">Primeiro preço deste produto{storeId ? ' neste mercado' : ''}.</p>
+              <p className="mt-2 text-xs text-muted">Primeiro preço deste produto{storeId ? ' neste lugar' : ''}.</p>
             )}
           </div>
         )}

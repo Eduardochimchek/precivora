@@ -1,6 +1,7 @@
 import { ALL_TABLES, db, SCHEMA_VERSION, type TableName } from '@/db/database';
 import { tableSchemas } from './schemas';
 import { searchKey } from '@/utils/text';
+import { builtinSegmentRows, DEFAULT_CATEGORIES, SEG_COMBUSTIVEL, SEG_MERCADO } from '@/db/defaults';
 import { logActivity } from '@/repositories/activity';
 
 export const BACKUP_APP = 'precivora';
@@ -35,11 +36,11 @@ export interface BackupAnalysis {
 }
 
 export const TABLE_LABEL: Record<TableName, string> = {
+  segments: 'Tipos de lugar',
   categories: 'Categorias',
   brands: 'Marcas',
   products: 'Produtos',
-  stores: 'Mercados',
-  stations: 'Postos',
+  stores: 'Lugares',
   prices: 'Preços',
   fuelPrices: 'Preços de combustível',
   reviews: 'Avaliações',
@@ -75,6 +76,20 @@ function migrate(backup: BackupFile): BackupFile {
       });
     backup.data.products = fix(backup.data.products);
     backup.data.brands = fix(backup.data.brands);
+  }
+  if (backup.schemaVersion < 3) {
+    const data = backup.data as Record<string, unknown[] | undefined>;
+    const stores = (data.stores ?? []).map((r) => ({ segmentId: SEG_MERCADO, ...(r as object) }));
+    const stations = (data.stations ?? []).map((r) => ({ ...(r as object), segmentId: SEG_COMBUSTIVEL }));
+    data.stores = [...stores, ...stations];
+    delete data.stations;
+    data.segments = builtinSegmentRows(backup.exportedAt ?? new Date().toISOString());
+    const segOf = new Map(DEFAULT_CATEGORIES.map(([n, , seg]) => [n, seg]));
+    data.categories = (data.categories ?? []).map((r) => {
+      const c = r as { name?: string; segmentId?: string };
+      const seg = c.name ? segOf.get(c.name) : undefined;
+      return seg && !c.segmentId ? { ...c, segmentId: seg } : c;
+    });
   }
   backup.schemaVersion = SCHEMA_VERSION;
   return backup;
@@ -137,8 +152,8 @@ export async function analyzeBackup(text: string, mode: ImportMode): Promise<Bac
     if (mode === 'merge') for (const k of await db.table(t).toCollection().primaryKeys()) set.add(String(k));
     return set;
   };
-  const [products, stores, stations, purchases, lists, brands, categories] = await Promise.all(
-    (['products', 'stores', 'stations', 'purchases', 'lists', 'brands', 'categories'] as TableName[]).map(ids),
+  const [products, stores, purchases, lists, brands, categories, segments] = await Promise.all(
+    (['products', 'stores', 'purchases', 'lists', 'brands', 'categories', 'segments'] as TableName[]).map(ids),
   );
   const refCheck = (t: TableName, field: string, set: Set<string>, optional = false) => {
     for (const r of (backup.data[t] ?? []) as Record<string, string>[]) {
@@ -152,7 +167,10 @@ export async function analyzeBackup(text: string, mode: ImportMode): Promise<Bac
   };
   refCheck('prices', 'productId', products);
   refCheck('prices', 'storeId', stores);
-  refCheck('fuelPrices', 'stationId', stations);
+  refCheck('fuelPrices', 'stationId', stores);
+  refCheck('stores', 'segmentId', segments);
+  refCheck('categories', 'segmentId', segments, true);
+  refCheck('products', 'segmentId', segments, true);
   refCheck('purchases', 'storeId', stores);
   refCheck('purchaseItems', 'purchaseId', purchases);
   refCheck('purchaseItems', 'productId', products);
@@ -170,7 +188,7 @@ export async function analyzeBackup(text: string, mode: ImportMode): Promise<Bac
     let duplicates = 0;
     if (mode === 'merge') {
       const existing = new Set((await db.table(t).toCollection().primaryKeys()).map(String));
-      const dupNames = t === 'brands' || t === 'categories' ? await namesOf(t) : null;
+      const dupNames = t === 'brands' || t === 'categories' || t === 'segments' ? await namesOf(t) : null;
       const reviewTargets = t === 'reviews' ? new Set((await db.reviews.toArray()).map((r) => `${r.targetType}:${r.targetId}`)) : null;
       for (const r of rows) {
         const isDup =
@@ -185,7 +203,7 @@ export async function analyzeBackup(text: string, mode: ImportMode): Promise<Bac
   return { ok: true, errors: [], backup, exportedAt: backup.exportedAt, schemaVersion: b.schemaVersion, tables };
 }
 
-async function namesOf(t: 'brands' | 'categories'): Promise<Set<string>> {
+async function namesOf(t: 'brands' | 'categories' | 'segments'): Promise<Set<string>> {
   const rows = (await db.table(t).toArray()) as { name: string }[];
   return new Set(rows.map((r) => searchKey(r.name)));
 }
@@ -210,17 +228,21 @@ export async function applyBackup(analysis: BackupAnalysis, mode: ImportMode): P
     }
 
     // merge: mapeia marcas/categorias de mesmo nome para os ids existentes
-    const remap = { brands: new Map<string, string>(), categories: new Map<string, string>() };
-    for (const t of ['brands', 'categories'] as const) {
+    const remap = { brands: new Map<string, string>(), categories: new Map<string, string>(), segments: new Map<string, string>() };
+    for (const t of ['brands', 'categories', 'segments'] as const) {
       const existing = new Map(((await db.table(t).toArray()) as { id: string; name: string }[]).map((r) => [searchKey(r.name), r.id]));
       for (const r of (data[t] ?? []) as { id: string; name: string }[]) {
         const match = existing.get(searchKey(r.name));
         if (match && match !== r.id) remap[t].set(r.id, match);
       }
     }
-    for (const p of (data.products ?? []) as { brandId?: string; categoryId?: string }[]) {
+    for (const p of (data.products ?? []) as { brandId?: string; categoryId?: string; segmentId?: string }[]) {
       if (p.brandId && remap.brands.has(p.brandId)) p.brandId = remap.brands.get(p.brandId);
       if (p.categoryId && remap.categories.has(p.categoryId)) p.categoryId = remap.categories.get(p.categoryId);
+      if (p.segmentId && remap.segments.has(p.segmentId)) p.segmentId = remap.segments.get(p.segmentId);
+    }
+    for (const r of [...((data.stores ?? []) as { segmentId?: string }[]), ...((data.categories ?? []) as { segmentId?: string }[])]) {
+      if (r.segmentId && remap.segments.has(r.segmentId)) r.segmentId = remap.segments.get(r.segmentId);
     }
     for (const r of (data.reviews ?? []) as { targetType: string; targetId: string }[]) {
       if (r.targetType === 'brand' && remap.brands.has(r.targetId)) r.targetId = remap.brands.get(r.targetId)!;
@@ -230,6 +252,7 @@ export async function applyBackup(analysis: BackupAnalysis, mode: ImportMode): P
     }
     data.brands = ((data.brands ?? []) as { id: string }[]).filter((r) => !remap.brands.has(r.id));
     data.categories = ((data.categories ?? []) as { id: string }[]).filter((r) => !remap.categories.has(r.id));
+    data.segments = ((data.segments ?? []) as { id: string }[]).filter((r) => !remap.segments.has(r.id));
 
     const reviewTargets = new Set((await db.reviews.toArray()).map((r) => `${r.targetType}:${r.targetId}`));
     const budgetCats = new Set((await db.categoryBudgets.toArray()).map((b) => b.categoryId));

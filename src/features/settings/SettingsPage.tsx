@@ -75,7 +75,7 @@ export default function SettingsPage() {
             inputMode="numeric"
             value={stale}
             onChange={(e) => setStale(e.target.value)}
-            hint="Preços de mercado mais antigos que isso não contam como “menor preço recente”. Combustível usa 7 dias."
+            hint="Preços de produtos mais antigos que isso não contam como “menor preço recente”. Combustível usa 7 dias."
           />
           <TextField
             label="Rendimento do etanol no seu carro"
@@ -86,7 +86,7 @@ export default function SettingsPage() {
             hint="Referência comum: 70%. Para saber o seu: km/L com etanol ÷ km/L com gasolina."
           />
           <TextField label="Volumes para simular abastecimento" suffix="L" value={tanks} onChange={(e) => setTanks(e.target.value)} hint="Até três valores separados por vírgula." />
-          <TextField label="Custo de ir a um mercado a mais" prefix="R$" inputMode="decimal" value={trip} onChange={(e) => setTrip(e.target.value)} />
+          <TextField label="Custo de ir a um lugar a mais" prefix="R$" inputMode="decimal" value={trip} onChange={(e) => setTrip(e.target.value)} />
           <Button className="self-start" onClick={save}>
             Salvar ajustes
           </Button>

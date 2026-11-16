@@ -15,28 +15,40 @@ const stamp = (d = 90) => ({ createdAt: ago(d), updatedAt: ago(d) });
 
 export function buildSampleBackup() {
   const id = () => randomUUID();
+  const MERC = 'seg-mercado';
+  const FARM = 'seg-farmacia';
+  const COMB = 'seg-combustivel';
+  const segments = [
+    { id: MERC, name: 'Mercado', icon: 'cart', color: '#2a78d6', mode: 'items', builtin: true, order: 0, ...stamp() },
+    { id: FARM, name: 'Farmácia', icon: 'pill', color: '#1baf7a', mode: 'items', builtin: true, order: 1, ...stamp() },
+    { id: COMB, name: 'Combustível', icon: 'fuel', color: '#eda100', mode: 'fuel', builtin: true, order: 2, ...stamp() },
+  ];
   const stores = [
-    { id: id(), name: 'Supermercado Vila Nova', neighborhood: 'Centro', city: 'Curitiba', color: '#2a78d6', active: true, ...stamp() },
-    { id: id(), name: 'Atacarejo Rota 5', neighborhood: 'Boqueirão', city: 'Curitiba', color: '#eb6834', active: true, ...stamp() },
-    { id: id(), name: 'Mercado da Esquina', neighborhood: 'Água Verde', city: 'Curitiba', color: '#1baf7a', active: true, ...stamp() },
+    { id: id(), segmentId: MERC, name: 'Supermercado Vila Nova', neighborhood: 'Centro', city: 'Curitiba', color: '#2a78d6', active: true, ...stamp() },
+    { id: id(), segmentId: MERC, name: 'Atacarejo Rota 5', neighborhood: 'Boqueirão', city: 'Curitiba', color: '#eb6834', active: true, ...stamp() },
+    { id: id(), segmentId: MERC, name: 'Mercado da Esquina', neighborhood: 'Água Verde', city: 'Curitiba', color: '#1baf7a', active: true, ...stamp() },
+    { id: id(), segmentId: FARM, name: 'Drogaria Central', neighborhood: 'Centro', city: 'Curitiba', color: '#6250d6', active: true, ...stamp() },
+    { id: id(), segmentId: FARM, name: 'Farmácia Popular do Bairro', neighborhood: 'Água Verde', city: 'Curitiba', color: '#e34948', active: true, ...stamp() },
   ];
   const stations = [
-    { id: id(), name: 'Posto Avenida', flag: 'Bandeira branca', city: 'Curitiba', color: '#eda100', active: true, ...stamp() },
-    { id: id(), name: 'Posto Trevo', city: 'Curitiba', color: '#e87ba4', active: true, ...stamp() },
-    { id: id(), name: 'Auto Posto Serra', city: 'Curitiba', color: '#6250d6', active: true, ...stamp() },
+    { id: id(), segmentId: COMB, name: 'Posto Avenida', flag: 'Bandeira branca', city: 'Curitiba', color: '#eda100', active: true, ...stamp() },
+    { id: id(), segmentId: COMB, name: 'Posto Trevo', city: 'Curitiba', color: '#e87ba4', active: true, ...stamp() },
+    { id: id(), segmentId: COMB, name: 'Auto Posto Serra', city: 'Curitiba', color: '#6250d6', active: true, ...stamp() },
   ];
   const brandNames = ['Grão Fino', 'Campo Sul', 'Vale Verde', 'Leiteria Serra', 'Brilho'];
   const brands = brandNames.map((name) => ({ id: id(), name, nameKey: key(name), ...stamp() }));
   const B = Object.fromEntries(brands.map((b) => [b.name, b.id]));
   const categories = [
-    { id: id(), name: 'Mercearia', color: '#D97706', ...stamp() },
-    { id: id(), name: 'Laticínios e frios', color: '#0EA5E9', ...stamp() },
-    { id: id(), name: 'Limpeza', color: '#0891B2', ...stamp() },
-    { id: id(), name: 'Hortifrúti', color: '#16A34A', ...stamp() },
+    { id: id(), name: 'Mercearia', color: '#D97706', segmentId: MERC, ...stamp() },
+    { id: id(), name: 'Laticínios e frios', color: '#0EA5E9', segmentId: MERC, ...stamp() },
+    { id: id(), name: 'Limpeza', color: '#0891B2', segmentId: MERC, ...stamp() },
+    { id: id(), name: 'Hortifrúti', color: '#16A34A', segmentId: MERC, ...stamp() },
+    { id: id(), name: 'Medicamentos', color: '#0D9488', segmentId: FARM, ...stamp() },
+    { id: id(), name: 'Dermocosméticos', color: '#C026D3', segmentId: FARM, ...stamp() },
   ];
   const C = Object.fromEntries(categories.map((c) => [c.name, c.id]));
-  const prod = (name, brand, cat, unit, packageSize, sub) => ({
-    id: id(), name, nameKey: key(name), brandId: B[brand], categoryId: C[cat], subcategory: sub, unit, packageSize, archived: false, ...stamp(),
+  const prod = (name, brand, cat, unit, packageSize, sub, segmentId = MERC) => ({
+    id: id(), name, nameKey: key(name), segmentId, brandId: B[brand], categoryId: C[cat], subcategory: sub, unit, packageSize, archived: false, ...stamp(),
   });
   const products = [
     prod('Arroz agulhinha tipo 1', 'Grão Fino', 'Mercearia', 'kg', 5, 'Grãos'),
@@ -46,9 +58,12 @@ export function buildSampleBackup() {
     prod('Leite integral', 'Leiteria Serra', 'Laticínios e frios', 'L', 1),
     prod('Ovos brancos', undefined, 'Hortifrúti', 'dz', 1),
     prod('Detergente neutro', 'Brilho', 'Limpeza', 'ml', 500),
+    prod('Dipirona 500 mg (20 comprimidos)', undefined, 'Medicamentos', 'cx', 1, 'Analgésicos', FARM),
+    prod('Protetor solar FPS 50', undefined, 'Dermocosméticos', 'ml', 200, undefined, FARM),
+    { id: id(), name: 'Escova de dente macia', nameKey: key('Escova de dente macia'), unit: 'un', packageSize: 1, archived: false, ...stamp() },
   ];
-  const [arroz5, arroz1, feijao, cafe, leite, ovos, deterg] = products.map((p) => p.id);
-  const [s1, s2, s3] = stores.map((s) => s.id);
+  const [arroz5, arroz1, feijao, cafe, leite, ovos, deterg, dipirona, protetor, escova] = products.map((p) => p.id);
+  const [s1, s2, s3, f1, f2] = stores.map((s) => s.id);
   const prices = [];
   const price = (productId, storeId, value, d, extra = {}) =>
     prices.push({ id: id(), productId, storeId, price: value, quantity: 1, date: ago(d), promo: false, source: 'manual', ...stamp(d), ...extra });
@@ -61,6 +76,9 @@ export function buildSampleBackup() {
   price(leite, s1, 4.89, 45); price(leite, s2, 4.59, 9); price(leite, s3, 5.19, 1);
   price(ovos, s3, 12.9, 3); price(ovos, s2, 11.49, 15);
   price(deterg, s2, 6.0, 7, { quantity: 3 }); price(deterg, s1, 2.39, 2);
+  price(dipirona, f1, 12.9, 20); price(dipirona, f1, 11.5, 4); price(dipirona, f2, 9.99, 6, { promo: true });
+  price(protetor, f1, 69.9, 10); price(protetor, f2, 59.9, 3);
+  price(escova, f1, 8.9, 5); price(escova, s1, 6.49, 4);
 
   const [p1, p2, p3] = stations.map((s) => s.id);
   const fuelPrices = [];
@@ -106,8 +124,8 @@ export function buildSampleBackup() {
   return {
     app: 'precivora',
     format: 1,
-    schemaVersion: 2,
+    schemaVersion: 3,
     exportedAt: new Date().toISOString(),
-    data: { categories, brands, products, stores, stations, prices, fuelPrices, reviews, purchases, purchaseItems, lists, listItems, categoryBudgets, activities: [], settings },
+    data: { segments, categories, brands, products, stores: [...stores, ...stations], prices, fuelPrices, reviews, purchases, purchaseItems, lists, listItems, categoryBudgets, activities: [], settings },
   };
 }

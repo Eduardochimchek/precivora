@@ -1,6 +1,7 @@
 import { db } from '@/db/database';
 import { deleteProduct, ensureBrand, saveProduct } from '@/repositories/catalog';
-import { deleteStore, saveStore } from '@/repositories/places';
+import { deletePlace, savePlace } from '@/repositories/places';
+import { SEG_MERCADO } from '@/db/defaults';
 import { deletePurchase, savePurchase } from '@/repositories/purchases';
 import { addListItem, createList } from '@/repositories/lists';
 import { saveReview } from '@/repositories/reviews';
@@ -9,7 +10,7 @@ import { savePrice } from '@/repositories/prices';
 import { ValidationError } from '@/repositories/errors';
 import { resetDb } from './db-helpers';
 
-const store = () => saveStore({ name: 'Mercado A', color: '#2a78d6', active: true });
+const store = () => savePlace({ segmentId: SEG_MERCADO, name: 'Mercado A', color: '#2a78d6', active: true });
 const prod = (name = 'Arroz', extra = {}) => saveProduct({ name, unit: 'kg', packageSize: 5, ...extra });
 
 beforeEach(resetDb);
@@ -92,7 +93,7 @@ describe('compras', () => {
     const p = await prod();
     await savePurchase({ storeId: s, date: new Date().toISOString(), items: [{ productId: p, quantity: 1, unitPrice: 25 }] });
     await expect(deleteProduct(p)).rejects.toThrow(/Arquive/);
-    await expect(deleteStore(s)).rejects.toThrow(/inativo/);
+    await expect(deletePlace(s)).rejects.toThrow(/inativo/);
     expect(await db.products.count()).toBe(1);
   });
 
