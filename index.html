@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Precivora — Sua economia começa aqui</title>
+    <meta name="description" content="Compare preços de mercados e combustíveis, avalie produtos e planeje compras. Local-first: seus dados ficam no seu aparelho, sem cadastro." />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#F7F9FC" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0B1220" media="(prefers-color-scheme: dark)" />
+    <meta name="application-name" content="Precivora" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Precivora" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Precivora — Sua economia começa aqui" />
+    <meta property="og:description" content="Descubra onde comprar, o que comprar e quanto economizar." />
+    <meta property="og:image" content="og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href="favicon.ico" sizes="48x48" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <script>
+      (function () {
+        var pref = 'system';
+        try { pref = localStorage.getItem('precivora:theme') || 'system'; } catch (e) {}
+        var dark = pref === 'dark' || (pref === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        var root = document.documentElement;
+        if (dark) root.classList.add('dark');
+        root.style.colorScheme = dark ? 'dark' : 'light';
+        var c = dark ? '#0B1220' : '#F7F9FC';
+        document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) { m.setAttribute('content', c); m.removeAttribute('media'); });
+        var sb = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+        if (sb) sb.setAttribute('content', dark ? 'black' : 'default');
+      })();
+    </script>
+    <style>
+      html { background: #F7F9FC; }
+      html.dark { background: #0B1220; }
+      #splash { position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px;
+        background: #F7F9FC; color: #101C2C; --splash-accent: #4D7C0F; transition: opacity .35s ease, visibility .35s; }
+      html.dark #splash { background: #0B1220; color: #F1F5F9; --splash-accent: #A3E635; }
+      #splash.done { opacity: 0; visibility: hidden; }
+      #splash svg { width: 76px; height: 80px; animation: splash-in .6s cubic-bezier(.2,.8,.2,1) both; }
+      #splash .bar { width: 72px; height: 3px; border-radius: 3px; background: currentColor; opacity: .12; overflow: hidden; position: relative; }
+      #splash .bar::after { content: ''; position: absolute; inset: 0; width: 40%; border-radius: 3px; background: var(--splash-accent); animation: splash-bar 1s ease-in-out infinite; }
+      #splash p { margin: 0; font: 600 13px/1 system-ui, sans-serif; letter-spacing: .02em; opacity: .55; }
+      @keyframes splash-in { from { opacity: 0; transform: translateY(8px) scale(.94); } to { opacity: 1; transform: none; } }
+      @keyframes splash-bar { 0% { transform: translateX(-100%); } 100% { transform: translateX(260%); } }
+      @media (prefers-reduced-motion: reduce) { #splash svg, #splash .bar::after { animation: none; } }
+    </style>
+  </head>
+  <body>
+    <div id="splash" role="status" aria-live="polite">
+      <svg viewBox="10 8 80 84" aria-hidden="true"><path d="M27 16 H58 a6 6 0 0 1 4.3 1.8 L79.5 35.5 a6 6 0 0 1 0 8.4 L62.3 61.6 a6 6 0 0 1 -4.3 1.8 H41 V76 a8 8 0 0 1 -8 8 h-0 a8 8 0 0 1 -8 -8 V24 a8 8 0 0 1 8 -8 Z M63.5 39.7 m-7 0 a7 7 0 1 0 14 0 a7 7 0 1 0 -14 0 Z" fill="currentColor" fill-rule="evenodd"/><path d="M50 70 L60 80 L68 72 L80 84" fill="none" stroke="var(--splash-accent)" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M70 84 H80 V74" fill="none" stroke="var(--splash-accent)" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="bar"></div>
+      <p>Preparando seus dados</p>
+    </div>
+    <div id="root"></div>
+    <noscript>O Precivora precisa de JavaScript para funcionar.</noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
