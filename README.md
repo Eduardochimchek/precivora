@@ -33,9 +33,9 @@ O **Precivora** é um app de inteligência de consumo **local-first**: você esc
 |---|---|
 | **Primeira abertura** | Boas-vindas com o nome perguntado uma única vez e apresentação guiada que passa pelas telas destacando cada parte. Dá para rever nos Ajustes. |
 | **Início** | Atalho grande para escanear a nota (no app) ou registrar preço, primeiros passos com progresso (some ao concluir ou ao ocultar), economia estimada do mês, orçamento, oportunidades (produtos abaixo da sua média), combustível mais barato, últimos preços e atividade. |
-| **Nota fiscal (NFC-e)** | No app Android: escaneia o QR Code do cupom (ou digita a chave), abre a consulta no site da Fazenda dentro do app e lê lugar, itens, quantidades e valores. Na conferência, cada item vira produto novo (nome legível e embalagem sugerida), produto já cadastrado ou é ignorado. O lugar é reconhecido pelo CNPJ, os produtos pelos vínculos das notas anteriores, e a mesma nota não entra duas vezes. Nota de posto vira preço de combustível. Feito para Santa Catarina; o leitor segue o layout nacional da consulta. |
+| **Nota fiscal (NFC-e)** | No app Android: escaneia o QR Code do cupom (ou digita a chave), abre a consulta no site da Fazenda dentro do app e lê lugar, itens, quantidades e valores. Na conferência, cada item vira produto novo (nome legível e embalagem sugerida), produto já cadastrado ou é ignorado. O lugar é reconhecido pelo CNPJ, os produtos pelos vínculos das notas anteriores, e a mesma nota não entra duas vezes. Nota de posto vira preço de combustível. Só aceita QR Code de site da Fazenda (.gov.br). Feito para Santa Catarina; o leitor segue o layout nacional da consulta. |
 | **Lugares e tipos** | Mercado, Farmácia e Combustível vêm prontos; você cria outros tipos (Pet shop, Padaria, Construção…) com ícone e cor. Lugares ilimitados de cada tipo, com cor, bairro, cidade e ativo/inativo. |
-| **Itens** | Cadastro genérico: só o nome é obrigatório, foto opcional. Em “Mais detalhes”: marca, categoria (por tipo de lugar), código de barras e embalagem em kg/g/L/ml/unidade/pacote/caixa/dúzia para comparar por unidade. Arquivar, editar e excluir. |
+| **Itens** | Cadastro genérico: só o nome é obrigatório, foto opcional. Em “Mais detalhes”: marca, categoria (por tipo de lugar), código de barras e embalagem em kg/g/L/ml/unidade/pacote/caixa/dúzia para comparar por unidade. Arquivar, editar e excluir. Pelo código de barras (lido pela câmera no app ou digitado), busca nome, marca, embalagem e foto nas bases abertas [Open Food Facts](https://world.openfoodfacts.org) e irmãs e avisa se o código já é de outro produto. |
 | **Registro de preço** | Formulário rápido com busca de produto, “salvar e próximo”, preço por unidade calculado na hora e variação contra o último preço (ex.: R$ 25,90 → R$ 23,90 = −7,72%). Suporta “leve 3 por R$ 10”. |
 | **Comparador** | Filtro por tipo de lugar, busca, filtros (categoria, marca, lugar, período, faixa de preço, promoções) e ordenação. Separa **menor preço recente**, **menor histórico** e **preço confirmado em compra**; marca preços desatualizados; avisa quando produtos medidos de jeitos diferentes não são comparáveis. |
 | **Sugestões** | Ranking explicado que combina sua nota, o preço por unidade, a tendência e suas preferências (favorito, “não comprar novamente”). Um produto barato com nota ruim não é recomendado em primeiro. |
@@ -70,7 +70,7 @@ Para o e2e, o Playwright precisa do Chromium: `npx playwright install chromium`.
 
 ### App Android
 
-O mesmo código vira um app Android de verdade com [Capacitor](https://capacitorjs.com) (pasta `android/`). No app, os dados ficam dentro dele (não no armazenamento do Chrome), a abertura tem animação da marca, a nota fiscal é escaneada pelo leitor de QR Code do Google (sem pedir permissão de câmera) e consultada numa tela própria, o backup usa o compartilhamento do Android e salva em `Documentos/Precivora`, o botão voltar fecha painéis e o tema segue o modo escuro do sistema.
+O mesmo código vira um app Android de verdade com [Capacitor](https://capacitorjs.com) (pasta `android/`). No app, os dados ficam dentro dele (não no armazenamento do Chrome), a abertura tem animação da marca, a nota fiscal e o código de barras dos produtos são lidos pelo leitor do Google (sem pedir permissão de câmera) e consultada numa tela própria, o backup usa o compartilhamento do Android e salva em `Documentos/Precivora`, o botão voltar fecha painéis e o tema segue o modo escuro do sistema.
 
 Requer JDK 17 e o Android SDK (`ANDROID_HOME` apontando para ele).
 
@@ -90,7 +90,7 @@ O build é estático (`dist/`) e usa rotas com `#`, então funciona em qualquer 
 - Sem login, sem servidor do Precivora, sem anúncios, sem rastreadores.
 - Tudo fica no **IndexedDB** do aparelho (no app Android, dentro do próprio app). O PWA pede armazenamento persistente para reduzir o risco de o navegador apagar os dados.
 - Desinstalar o app, limpar os dados do navegador ou trocar de aparelho **apaga os registros**. Por isso o app lembra de fazer backup, mostra quando foi o último e, no celular, envia o arquivo pelo compartilhamento do sistema.
-- Acessos à internet, sempre por ação sua: a consulta da nota fiscal, feita direto no site da Secretaria da Fazenda (o app só lê a página que a Fazenda mostra), o leitor de QR Code do Google Play, baixado pelo próprio Android na primeira vez, e o “Abrir no mapa” de um lugar com endereço.
+- Acessos à internet, sempre por ação sua: a consulta da nota fiscal, feita direto no site da Secretaria da Fazenda (o app só lê a página que a Fazenda mostra), a busca de produto pelo código de barras no Open Food Facts (vai só o número do código), o leitor de códigos do Google Play, baixado pelo próprio Android na primeira vez, e o “Abrir no mapa” de um lugar com endereço.
 
 ## Arquitetura
 

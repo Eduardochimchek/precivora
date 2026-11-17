@@ -43,6 +43,11 @@ describe('leitura da NFC-e', () => {
     expect(consultationUrl(`https://sat.sef.sc.gov.br/nfce/consulta?p=${key}|2|1`)).toMatchObject({ key, needsKeyTyping: false });
     expect(consultationUrl(key)).toEqual({ url: 'https://sat.sef.sc.gov.br/nfce/consulta', key, needsKeyTyping: true });
     expect(() => consultationUrl('35' + key.slice(2))).toThrow(/Santa Catarina/);
+    expect(() => consultationUrl('https://cardapio.exemplo.com/mesa/12')).toThrow(/não é de nota fiscal/);
+    expect(() => consultationUrl(`https://sat.sef.sc.gov.br.golpe.com/?p=${key}`)).toThrow(/não é de nota fiscal/);
+    expect(() => consultationUrl('https://sat.sef.sc.gov.br/nfce/consulta')).toThrow(/não é de nota fiscal/);
+    expect(() => consultationUrl('WIFI:S:Casa;T:WPA;P:123;;')).toThrow(/não é de nota fiscal/);
+    expect(consultationUrl(`http://www.fazenda.pr.gov.br/nfce/qrcode?p=${key}|2|1`).needsKeyTyping).toBe(false);
   });
 
   it('sugere embalagem, combustível e nome legível', () => {

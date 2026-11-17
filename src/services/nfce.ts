@@ -54,6 +54,18 @@ export function extractAccessKey(input: string): string | undefined {
 
 export const ufOfKey = (key: string) => key.slice(0, 2);
 
+const NOT_RECEIPT_QR = 'Este QR Code não é de nota fiscal. Aponte para o QR Code impresso no cupom (NFC-e).';
+
+/** Link de consulta de uma Secretaria da Fazenda (domínio .gov.br). */
+export function isFazendaUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    return (u.protocol === 'https:' || u.protocol === 'http:') && /\.gov\.br$/i.test(u.hostname) && !u.username && !u.password;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Endereço para abrir a nota: o próprio link do QR Code (quando é um link da Fazenda)
  * ou, para a chave digitada, a página de consulta do estado.
@@ -61,8 +73,11 @@ export const ufOfKey = (key: string) => key.slice(0, 2);
 export function consultationUrl(input: string): { url: string; key?: string; needsKeyTyping: boolean } {
   const trimmed = input.trim();
   const key = extractAccessKey(trimmed);
-  if (/^https?:\/\//i.test(trimmed)) return { url: trimmed, key, needsKeyTyping: false };
-  if (!key) throw new ReceiptParseError('Não encontrei uma chave de acesso válida (44 números).');
+  if (/^https?:\/\//i.test(trimmed)) {
+    if (!isFazendaUrl(trimmed) || !key) throw new ReceiptParseError(NOT_RECEIPT_QR);
+    return { url: trimmed, key, needsKeyTyping: false };
+  }
+  if (!key) throw new ReceiptParseError(/^[a-z]+:/i.test(trimmed) ? NOT_RECEIPT_QR : 'Não encontrei uma chave de acesso válida (44 números).');
   const base = UF_CONSULTA[ufOfKey(key)];
   if (!base) throw new ReceiptParseError('Por enquanto só notas de Santa Catarina podem ser consultadas pela chave. Escaneie o QR Code do cupom.');
   return { url: base, key, needsKeyTyping: true };

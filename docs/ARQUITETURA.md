@@ -76,3 +76,10 @@ QR Code (leitor do Google) ─▶ link da Fazenda ─▶ tela nativa com WebView
 - `services/nfce.ts` lê o layout nacional da consulta (classes `txtTit`, `Rqtd`, `RUN`, `RvlUnit`, `valor`) e, se elas faltarem, o texto da página. Também extrai a chave, sugere a embalagem pela descrição (“5KG”, “2L”) e o combustível pela descrição do item.
 - A importação roda numa transação: lugar novo, produtos novos, vínculos e a compra entram juntos ou nada entra.
 - A mesma chave não é importada duas vezes.
+- Só abre link de QR Code de domínio `.gov.br` que traga a chave; QR de cardápio, Pix ou site qualquer recebe aviso e não é aberto.
+
+## Código de barras do produto
+
+- No app, `scanProductBarcode` (em `app/nfceNative.ts`) usa o mesmo leitor do Google, limitado a EAN-13, EAN-8 e UPC-A.
+- `services/productLookup.ts` confere o dígito verificador e consulta a API v2 do Open Food Facts; quando a resposta indica outro tipo de produto (beleza, pet, geral), repete na base irmã. Só o número do código sai do aparelho.
+- O formulário preenche só o que está vazio (nome, marca, embalagem); a foto é baixada em segundo plano (o servidor de imagens demora) e reduzida como qualquer foto. Código já usado em outro produto oferece abrir ou usar o existente.
