@@ -87,7 +87,7 @@ export default function StoreDetailPage() {
         }
       />
       <div className="flex items-center gap-4">
-        <PlaceMark name={store.name} color={store.color} size={56} />
+        <PlaceMark name={store.name} color={store.color} logo={store.logo} size={56} />
         <div className="grid flex-1 grid-cols-3 gap-3">
           <Stat label="Produtos" value={rows.length} />
           <Stat label="Mais barato em" value={compared.length ? `${wins}/${compared.length}` : '—'} sub={compared.length ? 'dos comparáveis' : undefined} />

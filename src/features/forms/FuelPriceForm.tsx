@@ -1,15 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Plus } from 'lucide-react';
 import { db } from '@/db/database';
 import { FUEL_TYPES, type FuelPrice, type FuelType, type ID } from '@/types';
 import { Button, ChangeBadge, SelectField, Sheet, TextField, TextareaField, Toggle, useFeedback } from '@/design-system';
-import { useStations } from '@/hooks/useData';
 import { saveFuelPrice } from '@/repositories/prices';
 import { FUEL_LABEL, fuelUnit } from '@/services/fuel';
 import { priceChange } from '@/services/comparison';
 import { formatDateTime, fromDateTimeInput, toDateTimeInput } from '@/utils/date';
 import { money3, parseDecimal, toInputDecimal } from '@/utils/format';
+import { PlacePicker } from './PlacePicker';
 import { useActions } from './ActionsContext';
 
 export interface FuelPriceFormProps {
@@ -23,7 +22,6 @@ export interface FuelPriceFormProps {
 export function FuelPriceForm({ open, onClose, stationId: initialStation, fuel: initialFuel, recordId }: FuelPriceFormProps) {
   const { toast } = useFeedback();
   const actions = useActions();
-  const stations = (useStations() ?? []).filter((s) => s.active || s.id === initialStation);
   const [stationId, setStationId] = useState<ID | ''>('');
   const [fuel, setFuel] = useState<FuelType>('gasolina_comum');
   const [price, setPrice] = useState('');
@@ -123,28 +121,16 @@ export function FuelPriceForm({ open, onClose, stationId: initialStation, fuel: 
           void submit(false);
         }}
       >
-        <div className="flex items-end gap-2">
-          <SelectField label="Posto" value={stationId} onChange={(e) => setStationId(e.target.value)} error={errors.station} wrapperClassName="flex-1" data-autofocus={!initialStation || undefined}>
-            <option value="" disabled>
-              {stations.length ? 'Escolha o posto' : 'Cadastre um posto'}
-            </option>
-            {stations.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-                {s.flag ? ` (${s.flag})` : ''}
-              </option>
-            ))}
-          </SelectField>
-          <Button
-            variant="secondary"
-            className="h-12 w-12 px-0"
-            aria-label="Cadastrar posto"
-            title="Cadastrar posto"
-            onClick={() => actions.openPlace({ mode: 'fuel', onSaved: setStationId })}
-          >
-            <Plus className="h-5 w-5" />
-          </Button>
-        </div>
+        <PlacePicker
+          mode="fuel"
+          label="Posto"
+          value={stationId}
+          onChange={setStationId}
+          error={errors.station}
+          keepId={initialStation}
+          autoFocus={!initialStation}
+          onCreate={() => actions.openPlace({ mode: 'fuel', onSaved: setStationId })}
+        />
         <SelectField label="Combustível" value={fuel} onChange={(e) => setFuel(e.target.value as FuelType)}>
           {FUEL_TYPES.map((f) => (
             <option key={f} value={f}>

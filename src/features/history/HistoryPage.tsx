@@ -268,7 +268,7 @@ export default function HistoryPage() {
                         return (
                           <li key={p.id}>
                             <Link to={`/compras/${p.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-sunken">
-                              <PlaceMark name={st?.name ?? '?'} color={st?.color ?? '#64748B'} size={36} />
+                              <PlaceMark name={st?.name ?? '?'} color={st?.color ?? '#64748B'} logo={st?.logo} size={36} />
                               <div className="min-w-0 flex-1">
                                 <div className="truncate font-semibold">{st?.name ?? 'Lugar removido'}</div>
                                 <div className="text-xs text-muted">

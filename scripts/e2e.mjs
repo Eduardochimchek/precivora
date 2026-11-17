@@ -29,6 +29,13 @@ for (let i = 0; ; i++) {
 let failures = 0;
 let page;
 const results = [];
+async function pickPlace(page, name, label = 'Lugar') {
+  await page.getByLabel(label, { exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: label === 'Posto' ? 'Escolher posto' : 'Escolher lugar' });
+  await dialog.getByRole('button', { name: new RegExp(name) }).first().click();
+  await dialog.waitFor({ state: 'detached' }).catch(() => {});
+}
+
 async function step(name, fn) {
   try {
     await fn();
@@ -115,14 +122,14 @@ try {
     await page.getByRole('button', { name: 'Registrar preço' }).first().click();
     await page.getByRole('combobox', { name: 'Produto' }).fill('acucar');
     await page.getByRole('option', { name: /Açúcar refinado/ }).click();
-    await page.getByLabel('Lugar', { exact: true }).selectOption({ label: 'Mercado Teste' });
+    await pickPlace(page, 'Mercado Teste');
     await page.getByLabel('Preço', { exact: true }).fill('9,98');
     await page.getByRole('button', { name: 'Salvar preço' }).click();
     await page.waitForSelector('text=Preço registrado');
     await page.getByRole('button', { name: 'Registrar preço' }).first().click();
     await page.getByRole('combobox', { name: 'Produto' }).fill('açúcar');
     await page.getByRole('option', { name: /Açúcar refinado/ }).click();
-    await page.getByLabel('Lugar', { exact: true }).selectOption({ label: 'Mercado Teste' });
+    await pickPlace(page, 'Mercado Teste');
     await page.getByLabel('Preço', { exact: true }).fill('8,98');
     await page.waitForSelector('text=Último preço');
     const txt = (await page.locator('form#price-form').innerText()).replace(/\u00a0/g, ' ');
@@ -212,7 +219,7 @@ try {
     await page.waitForSelector('text=Produto cadastrado');
     await page.getByRole('link', { name: /Ração 10 kg/ }).click();
     await page.getByRole('button', { name: 'Registrar preço' }).first().click();
-    await page.getByLabel('Lugar', { exact: true }).selectOption({ label: 'Pet do Bairro' });
+    await pickPlace(page, 'Pet do Bairro');
     await page.getByLabel('Preço', { exact: true }).fill('149,90');
     await page.getByRole('button', { name: 'Salvar preço' }).click();
     await page.waitForSelector('text=Preço registrado');
@@ -244,7 +251,7 @@ try {
 
   await step('registra compra pela interface e gera preço confirmado', async () => {
     await go('/compras/nova');
-    await page.getByLabel('Lugar', { exact: true }).selectOption({ label: 'Mercado Teste' });
+    await pickPlace(page, 'Mercado Teste');
     await page.getByRole('combobox', { name: 'Adicionar produto' }).fill('açúcar');
     await page.getByRole('option', { name: /Açúcar refinado/ }).click();
     const unit = page.getByLabel('Preço unit.');

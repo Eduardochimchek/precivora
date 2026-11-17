@@ -52,7 +52,7 @@ export default function StationDetailPage() {
         }
       />
       <div className="flex items-center gap-3">
-        <PlaceMark name={station.name} color={station.color} size={48} />
+        <PlaceMark name={station.name} color={station.color} logo={station.logo} size={48} />
         <Button className="flex-1" icon={<Plus className="h-4 w-4" />} onClick={() => actions.openFuel({ stationId: station.id })}>
           Registrar preço
         </Button>

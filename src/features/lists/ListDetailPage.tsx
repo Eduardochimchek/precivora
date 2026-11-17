@@ -222,7 +222,7 @@ export default function ListDetailPage() {
               <Card className="divide-y divide-line">
                 {result.perStore.map((s) => (
                   <div key={s.storeId} className="flex items-center gap-3 px-4 py-3">
-                    <PlaceMark name={storeMap.get(s.storeId)?.name ?? '?'} color={storeMap.get(s.storeId)?.color ?? '#64748B'} size={34} />
+                    <PlaceMark name={storeMap.get(s.storeId)?.name ?? '?'} color={storeMap.get(s.storeId)?.color ?? '#64748B'} logo={storeMap.get(s.storeId)?.logo} size={34} />
                     <div className="min-w-0 flex-1">
                       <div className="truncate font-semibold">{storeMap.get(s.storeId)?.name}</div>
                       <div className="flex flex-wrap gap-1.5 text-xs text-muted">

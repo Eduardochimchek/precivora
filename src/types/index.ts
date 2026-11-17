@@ -82,6 +82,8 @@ export interface Place extends Timestamps {
   flag?: string;
   /** CNPJ (só dígitos), usado para reconhecer o lugar ao importar nota fiscal. */
   cnpj?: string;
+  /** Logo ou foto pequena (data URL). */
+  logo?: string;
   notes?: string;
   color: string;
   active: boolean;

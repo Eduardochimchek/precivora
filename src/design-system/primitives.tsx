@@ -129,8 +129,14 @@ export function inkOn(hex: string): string {
 }
 
 /** Marca colorida de mercado/posto. */
-export function PlaceMark({ name, color, size = 40 }: { name: string; color: string; size?: number }) {
+export function PlaceMark({ name, color, size = 40, logo }: { name: string; color: string; size?: number; logo?: string }) {
   const letter = name.trim()[0]?.toUpperCase() ?? '?';
+  if (logo)
+    return (
+      <span aria-hidden className="inline-flex shrink-0 items-center justify-center overflow-hidden rounded-[30%] border border-line bg-white" style={{ width: size, height: size }}>
+        <img src={logo} alt="" className="h-full w-full object-cover" loading="lazy" />
+      </span>
+    );
   return (
     <span
       aria-hidden

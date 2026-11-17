@@ -44,7 +44,8 @@ public class NfceBrowserActivity extends Activity {
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private String key;
-    private boolean keySent;
+    private int keyAttempts;
+    private boolean keyArmed = true;
     private WebView web;
     private TextView hint;
     private boolean done;
@@ -119,6 +120,12 @@ public class NfceBrowserActivity extends Activity {
         web.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String u) {
+                boolean security = u != null && u.contains("SecurityVerify");
+                if (security) {
+                    hint.setText("Marque a verificação de segurança e toque em Validar. Depois o app continua sozinho.");
+                } else {
+                    keyArmed = true;
+                }
                 check();
             }
         });
@@ -142,11 +149,14 @@ public class NfceBrowserActivity extends Activity {
 
     private void check() {
         if (done || web == null) return;
-        if (key != null && !keySent) {
+        if (key != null && keyArmed && keyAttempts < 2) {
+            keyArmed = false;
             web.evaluateJavascript(String.format(FILL_JS, key), value -> {
                 if (value != null && value.contains("ok")) {
-                    keySent = true;
-                    hint.setText("Consultando a nota…");
+                    keyAttempts++;
+                    hint.setText("Chave preenchida. Consultando…");
+                } else {
+                    keyArmed = true;
                 }
             });
         }

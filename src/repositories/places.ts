@@ -19,6 +19,8 @@ export interface PlaceInput {
   flag?: string;
   /** Mantido quando omitido (o formulário não edita o CNPJ). */
   cnpj?: string;
+  /** `null` remove; omitido mantém. */
+  logo?: string | null;
 }
 
 /** Cria ou atualiza um lugar (mercado, farmácia, posto...). */
@@ -46,6 +48,7 @@ export async function savePlace(input: PlaceInput, id?: ID): Promise<ID> {
     city: cleanText(input.city, 80),
     flag: segment.mode === 'fuel' ? cleanText(input.flag, 60) : undefined,
     cnpj: input.cnpj ?? prev?.cnpj,
+    logo: input.logo === null ? undefined : (input.logo ?? prev?.logo),
     notes: cleanText(input.notes, 1000),
     color: input.color,
     active: input.active,

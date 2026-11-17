@@ -54,6 +54,11 @@ export const placeSchema = z.object({
   color,
   active: z.boolean(),
   cnpj: z.string().regex(/^\d{14}$/).optional(),
+  logo: z
+    .string()
+    .max(200_000)
+    .regex(/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/)
+    .optional(),
   ...stamps,
 });
 export const priceSchema = z.object({

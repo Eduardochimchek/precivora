@@ -84,7 +84,7 @@ export default function FuelPage() {
                   const st = stationMap.get(q.stationId)!;
                   return (
                     <Link key={q.stationId} to={`/lugares/${q.stationId}`} className={cx('flex items-center gap-3 px-4 py-3.5 hover:bg-sunken', i === 0 && 'bg-lime/[.07]')}>
-                      <PlaceMark name={st.name} color={st.color} size={38} />
+                      <PlaceMark name={st.name} color={st.color} logo={st.logo} size={38} />
                       <div className="min-w-0 flex-1">
                         <div className="truncate font-semibold">{st.name}</div>
                         <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted">

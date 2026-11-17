@@ -272,7 +272,7 @@ export function DashboardPage() {
                   if (!p) return null;
                   return (
                     <Link key={r.id} to={`/produtos/${p.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-sunken">
-                      <PlaceMark name={st?.name ?? '?'} color={st?.color ?? '#64748B'} size={34} />
+                      <PlaceMark name={st?.name ?? '?'} color={st?.color ?? '#64748B'} logo={st?.logo} size={34} />
                       <div className="min-w-0 flex-1">
                         <div className="truncate text-[15px] font-semibold">{p.name}</div>
                         <div className="truncate text-xs text-muted">

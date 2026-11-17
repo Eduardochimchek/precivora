@@ -10,6 +10,7 @@ import { PLACE_COLORS } from '@/features/forms/ColorSwatches';
 import { SegmentIcon } from '@/design-system/SegmentIcon';
 import { useBrands, useMapById, usePlaces, useProducts, useSegments } from '@/hooks/useData';
 import { isNative } from '@/app/native';
+import { PlacePicker } from '@/features/forms/PlacePicker';
 import { fetchReceiptPage, scanReceiptQr, ScanCancelled } from '@/app/nfceNative';
 import { draftFromReceipt, fuelDecisions, importReceipt, type ItemDecision, type ReceiptDraft } from '@/repositories/receipts';
 import { consultationUrl, parseReceiptHtml } from '@/services/nfce';
@@ -120,7 +121,7 @@ export default function ImportReceiptPage() {
                   const place = places.get(p.storeId);
                   return (
                     <Link key={p.id} to={`/compras/${p.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-sunken">
-                      <PlaceMark name={place?.name ?? '?'} color={place?.color ?? '#64748B'} size={34} />
+                      <PlaceMark name={place?.name ?? '?'} color={place?.color ?? '#64748B'} logo={place?.logo} size={34} />
                       <div className="min-w-0 flex-1">
                         <div className="truncate font-semibold">{place?.name ?? 'Lugar removido'}</div>
                         <div className="text-xs text-muted">{formatDate(p.date)}</div>
@@ -212,7 +213,7 @@ export function ReceiptReview({ draft, onRestart }: { draft: ReceiptDraft; onRes
         <Card className="flex flex-col gap-4 p-4">
           {place ? (
             <div className="flex items-center gap-3">
-              <PlaceMark name={place.name} color={place.color} />
+              <PlaceMark name={place.name} color={place.color} logo={place.logo} />
               <div className="min-w-0 flex-1">
                 <div className="truncate font-semibold">{place.name}</div>
                 <div className="text-xs text-muted">{[place.neighborhood, place.city].filter(Boolean).join(' · ') || effectiveSegment?.name}</div>
@@ -244,14 +245,17 @@ export function ReceiptReview({ draft, onRestart }: { draft: ReceiptDraft; onRes
             </>
           )}
           {!!places?.length && (
-          <SelectField label={place ? 'Lugar' : 'Ou usar um lugar já cadastrado'} value={placeId} onChange={(e) => setPlaceId(e.target.value)}>
-            <option value="">Cadastrar lugar novo com os dados da nota</option>
-            {(places ?? []).map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </SelectField>
+            <PlacePicker
+              mode={fuelMode ? 'fuel' : 'items'}
+              label={place ? 'Trocar lugar' : 'Ou usar um lugar já cadastrado'}
+              value={placeId}
+              onChange={setPlaceId}
+            />
+          )}
+          {place && (
+            <Button variant="ghost" size="sm" className="self-start" onClick={() => setPlaceId('')}>
+              Cadastrar lugar novo com os dados da nota
+            </Button>
           )}
           <TextField label="Data da compra" type="date" value={date} max={toDateInput()} onChange={(e) => setDate(e.target.value)} />
         </Card>

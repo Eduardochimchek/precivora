@@ -1,11 +1,14 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { MapPin, Plus, Settings2 } from 'lucide-react';
+import { MapPin, Plus, Search, Settings2 } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { Button, Chip, EmptyState, ListSkeleton, PlaceMark, SegmentIcon, cx } from '@/design-system';
 import { useActions } from '@/features/forms/ActionsContext';
 import { useFuelPrices, useMapById, usePlaces, usePrices, useSegments } from '@/hooks/useData';
 import { relativeDays } from '@/utils/date';
+import { matches } from '@/utils/text';
+
+const PAGE = 80;
 
 export default function PlacesPage() {
   const actions = useActions();
@@ -16,6 +19,8 @@ export default function PlacesPage() {
   const prices = usePrices();
   const fuelPrices = useFuelPrices();
   const filter = params.get('tipo') ?? '';
+  const [query, setQuery] = useState('');
+  const [limit, setLimit] = useState(PAGE);
 
   const info = useMemo(() => {
     const m = new Map<string, { count: number; last?: string }>();
@@ -31,7 +36,8 @@ export default function PlacesPage() {
 
   const visible = (places ?? [])
     .filter((p) => !filter || p.segmentId === filter)
-    .sort((a, b) => Number(b.active) - Number(a.active) || a.name.localeCompare(b.name));
+    .filter((p) => !query.trim() || matches(`${p.name} ${p.flag ?? ''} ${p.neighborhood ?? ''} ${p.city ?? ''} ${p.address ?? ''}`, query))
+    .sort((a, b) => Number(b.active) - Number(a.active) || (info.get(b.id)?.count ?? 0) - (info.get(a.id)?.count ?? 0) || a.name.localeCompare(b.name, 'pt-BR'));
   const current = filter ? segments.get(filter) : undefined;
 
   return (
@@ -62,25 +68,46 @@ export default function PlacesPage() {
         </Link>
       </div>
 
+      {(places?.length ?? 0) > 8 && (
+        <div className="relative mb-4">
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setLimit(PAGE);
+            }}
+            placeholder="Buscar por nome, bairro ou cidade"
+            aria-label="Buscar lugar"
+            className="h-11 w-full rounded-md border border-line bg-surface pl-10 pr-3 text-[15px] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          />
+        </div>
+      )}
+
       {!places || !segmentsList ? (
         <ListSkeleton />
       ) : !visible.length ? (
         <EmptyState
           icon={current ? <SegmentIcon icon={current.icon} className="h-6 w-6" /> : <MapPin className="h-6 w-6" />}
-          title={current ? `Nenhum lugar do tipo ${current.name}` : 'Nenhum lugar cadastrado'}
+          title={query.trim() ? 'Nenhum lugar encontrado' : current ? `Nenhum lugar do tipo ${current.name}` : 'Nenhum lugar cadastrado'}
           action={<Button onClick={() => actions.openPlace({ segmentId: filter || undefined })}>Cadastrar lugar</Button>}
         >
           Cadastre quantos quiser. Só o nome é obrigatório.
         </EmptyState>
       ) : (
-        <ul className="divide-y divide-line overflow-hidden rounded-lg bg-surface shadow-card">
-          {visible.map((p) => {
+        <>
+          <p className="mb-2 text-xs text-muted">
+            {visible.length} lugar{visible.length === 1 ? '' : 'es'}
+          </p>
+          <ul className="divide-y divide-line overflow-hidden rounded-lg bg-surface shadow-card">
+          {visible.slice(0, limit).map((p) => {
             const i = info.get(p.id);
             const seg = segments.get(p.segmentId);
             return (
               <li key={p.id}>
                 <Link to={`/lugares/${p.id}`} className="flex items-center gap-3 px-4 py-3.5 hover:bg-sunken">
-                  <PlaceMark name={p.name} color={p.color} />
+                  <PlaceMark name={p.name} color={p.color} logo={p.logo} />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="truncate font-semibold">{p.name}</span>
@@ -101,7 +128,13 @@ export default function PlacesPage() {
               </li>
             );
           })}
-        </ul>
+          </ul>
+          {visible.length > limit && (
+            <Button variant="secondary" block className="mt-3" onClick={() => setLimit((l) => l + PAGE)}>
+              Mostrar mais ({visible.length - limit} restantes)
+            </Button>
+          )}
+        </>
       )}
     </div>
   );

@@ -161,7 +161,7 @@ export default function ProductDetailPage() {
                 const diff = q.packagePrice - stats.byStore[0].packagePrice;
                 return (
                   <Link key={q.storeId} to={`/lugares/${q.storeId}`} className="flex items-center gap-3 px-4 py-3 hover:bg-sunken">
-                    <PlaceMark name={st?.name ?? '?'} color={st?.color ?? '#64748B'} size={34} />
+                    <PlaceMark name={st?.name ?? '?'} color={st?.color ?? '#64748B'} logo={st?.logo} size={34} />
                     <div className="min-w-0 flex-1">
                       <div className="truncate font-semibold">{storeName(q.storeId)}</div>
                       <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted">
