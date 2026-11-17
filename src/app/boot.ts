@@ -31,9 +31,16 @@ export async function boot(): Promise<BootResult> {
   return { settings };
 }
 
+/** Tempo para a animação de abertura terminar antes de mostrar o app (só na primeira abertura da sessão). */
+const SPLASH_MIN_MS = 1650;
+
 export function hideSplash(): void {
   const el = document.getElementById('splash');
   if (!el) return;
-  el.classList.add('done');
-  window.setTimeout(() => el.remove(), 400);
+  const t0 = (window as Window & { __splashT0?: number }).__splashT0 ?? 0;
+  const wait = el.classList.contains('sp-static') ? 0 : Math.max(0, SPLASH_MIN_MS - (performance.now() - t0));
+  window.setTimeout(() => {
+    el.classList.add('done');
+    window.setTimeout(() => el.remove(), 450);
+  }, wait);
 }

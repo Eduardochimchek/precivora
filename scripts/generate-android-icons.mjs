@@ -17,6 +17,23 @@ function foregroundSvg(size, scale = 0.56) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 512 512"><g transform="translate(${off - 4 * k} ${off}) scale(${k})">${symbolParts()}</g></svg>`;
 }
 
+/** Etiqueta como vetor do Android: nítida em qualquer tamanho (a splash do sistema amplia o ícone). */
+function tagVector(scale = 0.56) {
+  const s = 512 * scale;
+  const off = (512 - s) / 2;
+  const k = s / 100;
+  const d = symbolParts().match(/<path d="([^"]+)" fill="[^"]+" fill-rule="evenodd"\/>/)[1];
+  const n = (v) => +v.toFixed(4);
+  return `<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="512" android:viewportHeight="512">
+    <group android:translateX="${n(off - 4 * k)}" android:translateY="${n(off)}" android:scaleX="${n(k)}" android:scaleY="${n(k)}">
+        <path android:fillColor="#F7F9FC" android:fillType="evenOdd" android:pathData="${d}" />
+    </group>
+</vector>
+`;
+}
+
 function roundSvg(size) {
   return appIconSvg({ size, rounded: false }).replace(/<rect width="512" height="512" rx="0"/, '<circle cx="256" cy="256" r="256"');
 }
@@ -42,15 +59,14 @@ for (const d of readdirSync(res)) {
 }
 rmSync(`${res}drawable/splash.png`, { force: true });
 mkdirSync(`${res}drawable-xxxhdpi`, { recursive: true });
-await png(foregroundSvg(512, 0.62), 288, `${res}drawable-xxxhdpi/splash_icon.png`);
+rmSync(`${res}drawable-xxxhdpi`, { recursive: true, force: true });
+writeFileSync(`${res}drawable/splash_symbol.xml`, tagVector());
 writeFileSync(
   `${res}drawable/splash.xml`,
   `<?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/splash_background" />
-    <item>
-        <bitmap android:gravity="center" android:src="@drawable/splash_icon" />
-    </item>
+    <item android:drawable="@drawable/splash_symbol" android:gravity="center" android:width="240dp" android:height="240dp" />
 </layer-list>
 `,
 );
@@ -60,7 +76,7 @@ writeFileSync(
   `<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">${NAVY}</color>
-    <color name="splash_background">${NAVY}</color>
+    <color name="splash_background">#0B1220</color>
 </resources>
 `,
 );

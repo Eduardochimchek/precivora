@@ -39,25 +39,57 @@
     <style>
       html { background: #F7F9FC; }
       html.dark { background: #0B1220; }
-      #splash { position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px;
-        background: #F7F9FC; color: #101C2C; --splash-accent: #4D7C0F; transition: opacity .35s ease, visibility .35s; }
-      html.dark #splash { background: #0B1220; color: #F1F5F9; --splash-accent: #A3E635; }
-      #splash.done { opacity: 0; visibility: hidden; }
-      #splash svg { width: 76px; height: 80px; animation: splash-in .6s cubic-bezier(.2,.8,.2,1) both; }
-      #splash .bar { width: 72px; height: 3px; border-radius: 3px; background: currentColor; opacity: .12; overflow: hidden; position: relative; }
-      #splash .bar::after { content: ''; position: absolute; inset: 0; width: 40%; border-radius: 3px; background: var(--splash-accent); animation: splash-bar 1s ease-in-out infinite; }
-      #splash p { margin: 0; font: 600 13px/1 system-ui, sans-serif; letter-spacing: .02em; opacity: .55; }
-      @keyframes splash-in { from { opacity: 0; transform: translateY(8px) scale(.94); } to { opacity: 1; transform: none; } }
-      @keyframes splash-bar { 0% { transform: translateX(-100%); } 100% { transform: translateX(260%); } }
-      @media (prefers-reduced-motion: reduce) { #splash svg, #splash .bar::after { animation: none; } }
+      #splash { --u: 1.344px; position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; overflow: hidden;
+        background: #0B1220; color: #F7F9FC; transition: opacity .38s ease, transform .38s cubic-bezier(.4,0,.2,1), visibility .38s; }
+      #splash.done { opacity: 0; transform: scale(1.06); visibility: hidden; }
+      #splash .sp-row { display: grid; grid-template-columns: auto 0fr; align-items: center; animation: sp-open .5s cubic-bezier(.2,.8,.2,1) .75s both; }
+      #splash .sp-mark { position: relative; display: block; width: calc(80 * var(--u)); height: calc(84 * var(--u)); overflow: visible; }
+      #splash .sp-tag { transform-box: fill-box; transform-origin: 50% 0; animation: sp-thud .42s cubic-bezier(.3,0,.3,1) .42s both; }
+      #splash .sp-arrow, #splash .sp-head { fill: none; stroke: #A3E635; stroke-width: 6.5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1 1; }
+      #splash .sp-arrow { stroke-dashoffset: 1; animation: sp-draw .42s cubic-bezier(.55,0,.75,.4) .12s forwards; }
+      #splash .sp-head { stroke-dashoffset: 1; animation: sp-draw .16s ease-out .5s forwards; }
+      #splash .sp-rays line { stroke: #A3E635; stroke-width: 3.4; stroke-linecap: round; stroke-dasharray: .45 2; stroke-dashoffset: .45; opacity: 0; animation: sp-ray .45s cubic-bezier(.2,.7,.3,1) .56s forwards; }
+      #splash .sp-markwrap { position: relative; display: block; }
+      #splash .sp-glow { position: absolute; left: calc(62 * var(--u)); top: calc(70 * var(--u)); width: 180px; height: 180px; margin: -90px 0 0 -90px; border-radius: 50%;
+        background: radial-gradient(circle, rgba(163,230,53,.18), rgba(163,230,53,0) 62%); opacity: 0; transform: scale(.4); animation: sp-glow .9s ease-out .5s forwards; }
+      #splash .sp-word { min-width: 0; overflow: hidden; }
+      #splash .sp-word span { display: block; padding: 0 4px 6px 2px; white-space: nowrap; font: 700 44px/1 'Bricolage Grotesque Variable', 'Bricolage Grotesque', system-ui, sans-serif;
+        letter-spacing: -.03em; opacity: 0; transform: translateX(-10px); animation: sp-word .45s cubic-bezier(.2,.8,.2,1) .85s forwards; }
+      #splash .sp-tagline { position: absolute; top: calc(50% + 72px); margin: 0; font: 600 15px/1.2 'Manrope Variable', system-ui, sans-serif; letter-spacing: .01em; color: #94A3B8;
+        opacity: 0; transform: translateY(6px); animation: sp-word .45s ease-out 1.05s forwards; }
+      #splash.sp-static *, #splash.sp-static .sp-word span { animation: none !important; }
+      #splash.sp-static .sp-row { grid-template-columns: auto 1fr; }
+      #splash.sp-static .sp-arrow, #splash.sp-static .sp-head { stroke-dashoffset: 0; }
+      #splash.sp-static .sp-word span, #splash.sp-static .sp-tagline { opacity: 1; transform: none; }
+      @keyframes sp-draw { to { stroke-dashoffset: 0; } }
+      @keyframes sp-thud { 0% { transform: none; } 45% { transform: translateY(calc(3 * var(--u))) scaleY(.97); } 100% { transform: none; } }
+      @keyframes sp-ray { 0% { opacity: 1; stroke-dashoffset: .45; } 100% { opacity: 0; stroke-dashoffset: -1.2; } }
+      @keyframes sp-glow { 0% { opacity: 0; transform: scale(.4); } 30% { opacity: 1; } 100% { opacity: 0; transform: scale(1.4); } }
+      @keyframes sp-open { to { grid-template-columns: auto 1fr; } }
+      @keyframes sp-word { to { opacity: 1; transform: none; } }
     </style>
   </head>
   <body>
-    <div id="splash" role="status" aria-live="polite">
-      <svg viewBox="10 8 80 84" aria-hidden="true"><path d="M27 16 H58 a6 6 0 0 1 4.3 1.8 L79.5 35.5 a6 6 0 0 1 0 8.4 L62.3 61.6 a6 6 0 0 1 -4.3 1.8 H41 V76 a8 8 0 0 1 -8 8 h-0 a8 8 0 0 1 -8 -8 V24 a8 8 0 0 1 8 -8 Z M63.5 39.7 m-7 0 a7 7 0 1 0 14 0 a7 7 0 1 0 -14 0 Z" fill="currentColor" fill-rule="evenodd"/><path d="M50 70 L60 80 L68 72 L80 84" fill="none" stroke="var(--splash-accent)" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M70 84 H80 V74" fill="none" stroke="var(--splash-accent)" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <div class="bar"></div>
-      <p>Preparando seus dados</p>
+    <div id="splash" role="status" aria-label="Abrindo o Precivora">
+      <div class="sp-row" aria-hidden="true">
+        <span class="sp-markwrap"><span class="sp-glow"></span><svg class="sp-mark" viewBox="14 8 80 84">
+          <path class="sp-tag" d="M27 16 H58 a6 6 0 0 1 4.3 1.8 L79.5 35.5 a6 6 0 0 1 0 8.4 L62.3 61.6 a6 6 0 0 1 -4.3 1.8 H41 V76 a8 8 0 0 1 -8 8 h-0 a8 8 0 0 1 -8 -8 V24 a8 8 0 0 1 8 -8 Z M63.5 39.7 m-7 0 a7 7 0 1 0 14 0 a7 7 0 1 0 -14 0 Z" fill="currentColor" fill-rule="evenodd"/>
+          <path class="sp-arrow" pathLength="1" d="M50 70 L60 80 L68 72 L80 84"/>
+          <path class="sp-head" pathLength="1" d="M70 84 H80 V74"/>
+          <g class="sp-rays"><line pathLength="1" x1="85" y1="89" x2="97" y2="101"/><line pathLength="1" x1="87" y1="84" x2="103" y2="84"/><line pathLength="1" x1="80" y1="91" x2="80" y2="107"/><line pathLength="1" x1="86" y1="78" x2="97" y2="68"/><line pathLength="1" x1="74" y1="90" x2="64" y2="101"/></g>
+        </svg></span>
+        <div class="sp-word"><span>precivora</span></div>
+      </div>
+      <p class="sp-tagline">Sua economia começa aqui</p>
     </div>
+    <script>
+      (function () {
+        window.__splashT0 = performance.now();
+        var replay = false;
+        try { replay = sessionStorage.getItem('precivora:splash') === '1'; sessionStorage.setItem('precivora:splash', '1'); } catch (e) {}
+        if (replay || window.matchMedia('(prefers-reduced-motion: reduce)').matches) document.getElementById('splash').classList.add('sp-static');
+      })();
+    </script>
     <div id="root"></div>
     <noscript>O Precivora precisa de JavaScript para funcionar.</noscript>
     <script type="module" src="/src/main.tsx"></script>
