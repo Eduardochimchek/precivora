@@ -10,6 +10,7 @@ import type {
   Product,
   Purchase,
   PurchaseItem,
+  ReceiptLink,
   Review,
   Segment,
   SettingRow,
@@ -21,7 +22,7 @@ import { builtinSegmentRows, defaultCategoryRows, DEFAULT_CATEGORIES, SEG_COMBUS
 
 export const DB_NAME = 'precivora';
 /** Versão do esquema. Ao mudar, adicione um novo `this.version(n)` com `upgrade` e atualize o backup. */
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 export class PrecivoraDB extends Dexie {
   categories!: EntityTable<Category, 'id'>;
@@ -40,6 +41,7 @@ export class PrecivoraDB extends Dexie {
   categoryBudgets!: EntityTable<CategoryBudget, 'id'>;
   activities!: EntityTable<Activity, 'id'>;
   settings!: EntityTable<SettingRow, 'key'>;
+  receiptLinks!: EntityTable<ReceiptLink, 'id'>;
 
   constructor(name = DB_NAME) {
     super(name);
@@ -107,6 +109,13 @@ export class PrecivoraDB extends Dexie {
         if (newOnes.size) await tx.table('categories').bulkAdd(defaultCategoryRows(now, newOnes));
       });
 
+    // v4 — importação de nota fiscal: CNPJ do lugar, chave da nota na compra e vínculos item → produto.
+    this.version(4).stores({
+      stores: 'id, name, segmentId, cnpj',
+      purchases: 'id, storeId, date, receiptKey',
+      receiptLinks: 'id, placeId, [placeId+key], productId',
+    });
+
     this.on('populate', (tx) => {
       const now = new Date().toISOString();
       tx.table('segments').bulkAdd(builtinSegmentRows(now));
@@ -135,6 +144,7 @@ export const ALL_TABLES = [
   'categoryBudgets',
   'activities',
   'settings',
+  'receiptLinks',
 ] as const;
 export type TableName = (typeof ALL_TABLES)[number];
 

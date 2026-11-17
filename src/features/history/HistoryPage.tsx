@@ -1,8 +1,9 @@
 import { lazy, Suspense, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowDownRight, ArrowUpRight, Download, History, Plus, ShoppingCart } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, Download, History, Keyboard, MoreVertical, Plus, ScanLine, ShieldCheck, ShoppingCart } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
-import { Button, Card, EmptyState, ListSkeleton, PlaceMark, Section, Segmented, Sheet, Skeleton, Stat, useFeedback } from '@/design-system';
+import { isNative } from '@/app/native';
+import { Button, Card, EmptyState, IconButton, ListSkeleton, PlaceMark, Section, Segmented, Sheet, Skeleton, Stat, cx, useFeedback } from '@/design-system';
 import { useCategories, useFuelPrices, useMapById, usePrices, useProducts, usePurchaseItems, usePurchases, useStations, useStores } from '@/hooks/useData';
 import { categorySpending, estimatedSavings, monthlySpending, priceMovers } from '@/services/analytics';
 import { toCsv } from '@/services/csv';
@@ -29,6 +30,7 @@ export default function HistoryPage() {
   const stationMap = useMapById(useStations());
   const [months, setMonths] = useState<'3' | '6' | '12'>('6');
   const [exportOpen, setExportOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const since = useMemo(() => {
     const d = new Date();
@@ -138,17 +140,51 @@ export default function HistoryPage() {
         title="Histórico"
         subtitle="Suas compras e como os preços mudaram."
         actions={
-          <>
-            <Button size="sm" variant="secondary" icon={<Download className="h-4 w-4" />} onClick={() => setExportOpen(true)} aria-label="Exportar CSV">
-              CSV
-            </Button>
-            <Link to="/compras/nova" className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary px-3 text-sm font-semibold text-on-primary hover:opacity-90">
-              <Plus className="h-4 w-4" aria-hidden />
-              Compra
-            </Link>
-          </>
+          <IconButton label="Mais opções do histórico" onClick={() => setMenuOpen(true)}>
+            <MoreVertical className="h-5 w-5" />
+          </IconButton>
         }
       />
+
+      <div className="-mt-2 grid grid-cols-2 gap-2">
+        {isNative ? (
+          <Link to="/notas/importar?auto=1" className="flex h-12 items-center justify-center gap-2 rounded-lg bg-lime font-semibold text-navy hover:brightness-95">
+            <ScanLine className="h-5 w-5" aria-hidden />
+            Escanear nota
+          </Link>
+        ) : null}
+        <Link
+          to="/compras/nova"
+          className={cx(
+            'flex h-12 items-center justify-center gap-2 rounded-lg font-semibold',
+            isNative ? 'border border-line bg-surface hover:bg-sunken' : 'col-span-2 bg-primary text-on-primary hover:opacity-90 sm:col-span-1',
+          )}
+        >
+          <Plus className="h-5 w-5" aria-hidden />
+          {isNative ? 'Compra sem nota' : 'Registrar compra'}
+        </Link>
+      </div>
+
+      <Sheet open={menuOpen} onClose={() => setMenuOpen(false)} title="Histórico">
+        <div className="-mx-2 flex flex-col">
+          <button
+            type="button"
+            className="flex min-h-12 items-center gap-3 rounded-md px-2 text-left font-semibold hover:bg-sunken"
+            onClick={() => {
+              setMenuOpen(false);
+              setExportOpen(true);
+            }}
+          >
+            <Download className="h-5 w-5 text-muted" aria-hidden /> Exportar CSV
+          </button>
+          <Link to="/notas/importar" className="flex min-h-12 items-center gap-3 rounded-md px-2 font-semibold hover:bg-sunken" onClick={() => setMenuOpen(false)}>
+            <Keyboard className="h-5 w-5 text-muted" aria-hidden /> Importar nota pela chave de acesso
+          </Link>
+          <Link to="/backup" className="flex min-h-12 items-center gap-3 rounded-md px-2 font-semibold hover:bg-sunken" onClick={() => setMenuOpen(false)}>
+            <ShieldCheck className="h-5 w-5 text-muted" aria-hidden /> Backup dos dados
+          </Link>
+        </div>
+      </Sheet>
 
       {!data || !purchases ? (
         <div className="flex flex-col gap-4">
@@ -212,13 +248,10 @@ export default function HistoryPage() {
               <EmptyState
                 icon={<History className="h-6 w-6" />}
                 title="Nenhuma compra registrada"
-                action={
-                  <Link to="/compras/nova" className="inline-flex h-11 items-center rounded-md bg-primary px-4 font-semibold text-on-primary">
-                    Registrar compra
-                  </Link>
-                }
               >
-                Registrar o que você pagou mostra seus gastos, a economia e confirma os preços.
+                {isNative
+                  ? 'Escaneie a nota fiscal da próxima compra: o app registra o que você pagou, mostra seus gastos e a economia.'
+                  : 'Registrar o que você pagou mostra seus gastos, a economia e confirma os preços.'}
               </EmptyState>
             ) : (
               <div className="flex flex-col gap-5">

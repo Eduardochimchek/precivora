@@ -50,7 +50,8 @@ page = await mobile.newPage();
 page.setDefaultTimeout(10000);
 page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
 page.on('pageerror', (e) => errors.push(e.message));
-const shot = (name) => page.screenshot({ path: join(SHOTS, `${name}.png`), fullPage: true });
+const SHOT_STYLE = '[data-toasts], div.fixed[role="status"]{visibility:hidden!important}';
+const shot = (name, fullPage = true) => page.screenshot({ path: join(SHOTS, `${name}.png`), fullPage, style: SHOT_STYLE });
 const go = async (hash) => {
   await page.goto(`${BASE}#${hash}`);
   await page.waitForLoadState('networkidle');
@@ -58,17 +59,38 @@ const go = async (hash) => {
 };
 
 try {
-  await step('abre com splash e mostra onboarding com banco vazio', async () => {
+  await step('primeira abertura: boas-vindas, nome uma vez e apresentação guiada', async () => {
     await page.goto(BASE);
-    await page.waitForSelector('text=Comece em três passos', { timeout: 10000 });
+    await page.waitForSelector('text=Descubra onde comprar e quanto economizar.', { timeout: 10000 });
     await page.waitForSelector('#splash', { state: 'detached', timeout: 5000 });
     const meta = await page.getAttribute('meta[name="theme-color"]', 'content');
     assert(meta === '#F7F9FC', `theme-color claro esperado, veio ${meta}`);
-    await shot('01-onboarding');
+    await shot('01-boas-vindas', false);
+    await page.getByRole('button', { name: 'Começar' }).click();
+    await page.getByLabel('Seu nome (opcional)').fill('Ana');
+    await page.getByRole('button', { name: 'Continuar' }).click();
+    const tour = page.getByRole('dialog', { name: 'Registre os preços' });
+    await tour.waitFor();
+    await page.waitForTimeout(400);
+    await shot('01b-tour', false);
+    const seen = [];
+    for (let i = 0; i < 6; i++) {
+      await page.getByRole('button', { name: 'Próximo' }).click();
+      await page.waitForTimeout(250);
+      seen.push(await page.evaluate(() => location.hash));
+    }
+    assert(seen.includes('#/listas') && seen.includes('#/historico') && seen.includes('#/mais'), `tour não passou pelas telas: ${seen.join(' ')}`);
+    await page.getByRole('button', { name: 'Começar a usar' }).click();
+    await page.waitForSelector('text=Primeiros passos');
+    assert((await page.locator('h1').first().innerText()).includes('Ana'), 'saudação sem o nome');
+    await page.reload();
+    await page.waitForSelector('text=Primeiros passos');
+    assert((await page.locator('text=Descubra onde comprar e quanto economizar.').count()) === 0, 'boas-vindas apareceram de novo');
+    await shot('01c-inicio-vazio');
   });
 
   await step('cadastra lugar (tipo Mercado) pela interface', async () => {
-    await page.getByRole('button', { name: 'Cadastre os lugares onde você compra' }).click();
+    await page.getByRole('button', { name: 'Cadastrar um lugar' }).click();
     assert((await page.getByRole('radio', { name: 'Mercado' }).getAttribute('aria-checked')) === 'true', 'tipo Mercado não veio marcado');
     await page.getByLabel('Nome').fill('Mercado Teste');
     await page.getByLabel('Bairro (opcional)').fill('Centro');
@@ -239,7 +261,7 @@ try {
     await go('/');
     await page.waitForSelector('text=Economia estimada');
     await page.waitForSelector('text=Oportunidades');
-    await shot('05-inicio');
+    await shot('05-inicio', false);
   });
 
   await step('comparador: busca "arroz" com sugestões explicadas', async () => {
@@ -247,7 +269,7 @@ try {
     await page.waitForSelector('text=Melhores escolhas para');
     const first = await page.locator('section[aria-labelledby="sugestoes"] li').first().innerText();
     assert(first.includes('Grão Fino'), 'Arroz Grão Fino (nota 5) deveria ser a 1ª sugestão: ' + first);
-    await shot('06-comparar-arroz');
+    await shot('06-comparar-arroz', false);
   });
 
   await step('ficha do produto com estatísticas e gráfico', async () => {
@@ -274,14 +296,14 @@ try {
     const txt = await page.locator('main').innerText();
     assert(/Melhor lugar único|Compra dividida/.test(txt), 'sem recomendação');
     await page.getByRole('checkbox').first().click();
-    await shot('09-lista');
+    await shot('09-lista', false);
   });
 
   await step('histórico com gráfico e categorias', async () => {
     await go('/historico');
     await page.waitForSelector('text=Gasto por mês');
     await page.waitForSelector('.recharts-surface');
-    await shot('11-historico');
+    await shot('11-historico', false);
   });
 
   for (const [hash, name, text] of [
@@ -314,7 +336,7 @@ try {
     await page.waitForSelector('text=Melhores escolhas para');
     await shot('21-comparar-escuro');
     await go('/combustiveis');
-    await shot('22-combustiveis-escuro');
+    await shot('22-combustiveis-escuro', false);
     await page.reload();
     assert(await page.evaluate(() => document.documentElement.classList.contains('dark')), 'tema escuro não persistiu');
     await go('/ajustes');
@@ -357,10 +379,12 @@ try {
     const d = await desktop.newPage();
     d.on('pageerror', (e) => errors.push(e.message));
     await d.goto(BASE);
-    await d.waitForSelector('text=Comece em três passos');
+    await d.waitForSelector('text=Descubra onde comprar e quanto economizar.');
     assert(await d.evaluate(() => document.documentElement.classList.contains('dark')), 'tema automático não seguiu o sistema');
+    await d.screenshot({ path: join(SHOTS, '30-desktop-boas-vindas-escuro.png') });
+    await d.getByRole('button', { name: 'Já tenho um backup' }).click();
+    await d.waitForSelector('text=Trocar de celular');
     assert(await d.locator('aside nav').isVisible(), 'navegação lateral não visível');
-    await d.screenshot({ path: join(SHOTS, '30-desktop-onboarding-escuro.png') });
     const file = join(tmpdir(), 'precivora-demo-backup.json');
     await d.goto(`${BASE}#/backup`);
     await d.getByRole('radio', { name: 'Substituir tudo' }).click();
@@ -371,11 +395,11 @@ try {
     await d.goto(`${BASE}#/`);
     await d.waitForSelector('text=Oportunidades');
     await d.waitForTimeout(300);
-    await d.screenshot({ path: join(SHOTS, '31-desktop-inicio.png') });
+    await d.screenshot({ path: join(SHOTS, '31-desktop-inicio.png'), style: SHOT_STYLE });
     await d.goto(`${BASE}#/listas`);
     await d.getByRole('link', { name: /Compra do mês/ }).click();
     await d.waitForSelector('text=Onde comprar');
-    await d.screenshot({ path: join(SHOTS, '32-desktop-lista.png'), fullPage: true });
+    await d.screenshot({ path: join(SHOTS, '32-desktop-lista.png'), fullPage: true, style: SHOT_STYLE });
   });
 
   await step('sem erros no console', async () => {

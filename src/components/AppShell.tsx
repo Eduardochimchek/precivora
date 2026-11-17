@@ -4,11 +4,11 @@ import { useEffect } from 'react';
 import { Logo, cx } from '@/design-system';
 
 const MAIN = [
-  { to: '/', label: 'Início', icon: House, end: true },
-  { to: '/comparar', label: 'Comparar', icon: Scale },
-  { to: '/listas', label: 'Listas', icon: ListChecks },
-  { to: '/historico', label: 'Histórico', icon: History },
-  { to: '/mais', label: 'Mais', icon: LayoutGrid },
+  { to: '/', label: 'Início', icon: House, end: true, tour: 'nav-inicio' },
+  { to: '/comparar', label: 'Comparar', icon: Scale, tour: 'nav-comparar' },
+  { to: '/listas', label: 'Listas', icon: ListChecks, tour: 'nav-listas' },
+  { to: '/historico', label: 'Histórico', icon: History, tour: 'nav-historico' },
+  { to: '/mais', label: 'Mais', icon: LayoutGrid, tour: 'nav-mais' },
 ];
 
 const SIDE_EXTRA = [
@@ -65,10 +65,10 @@ export function AppShell() {
         className="pb-safe fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 backdrop-blur-md md:hidden"
       >
         <ul className="mx-auto flex h-[var(--nav-h)] max-w-lg items-stretch">
-          {MAIN.map(({ to, label, icon: Icon, end }) => {
+          {MAIN.map(({ to, label, icon: Icon, end, tour }) => {
             const active = section === to;
             return (
-              <li key={to} className="flex-1">
+              <li key={to} className="flex-1" data-tour={tour}>
                 <NavLink
                   to={to}
                   end={end}
@@ -94,11 +94,12 @@ export function AppShell() {
   );
 }
 
-function SideLink({ to, label, icon: Icon, active, end }: { to: string; label: string; icon: typeof House; active: boolean; end?: boolean }) {
+function SideLink({ to, label, icon: Icon, active, end, tour }: { to: string; label: string; icon: typeof House; active: boolean; end?: boolean; tour?: string }) {
   return (
     <NavLink
       to={to}
       end={end}
+      data-tour={tour}
       aria-current={active ? 'page' : undefined}
       className={cx(
         'flex h-11 items-center gap-3 rounded-md px-3 text-[15px] font-semibold transition-colors',

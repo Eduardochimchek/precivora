@@ -51,6 +51,7 @@ export const TABLE_LABEL: Record<TableName, string> = {
   categoryBudgets: 'Limites por categoria',
   activities: 'Atividades',
   settings: 'Configurações',
+  receiptLinks: 'Vínculos de nota fiscal',
 };
 
 export async function exportBackup(): Promise<BackupFile> {
@@ -168,6 +169,8 @@ export async function analyzeBackup(text: string, mode: ImportMode): Promise<Bac
   refCheck('prices', 'productId', products);
   refCheck('prices', 'storeId', stores);
   refCheck('fuelPrices', 'stationId', stores);
+  refCheck('receiptLinks', 'placeId', stores);
+  refCheck('receiptLinks', 'productId', products);
   refCheck('stores', 'segmentId', segments);
   refCheck('categories', 'segmentId', segments, true);
   refCheck('products', 'segmentId', segments, true);

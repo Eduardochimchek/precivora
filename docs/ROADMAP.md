@@ -2,13 +2,14 @@
 
 ## Fase 1 — MVP (concluída)
 
-Produtos, marcas e categorias · mercados · postos · preços · comparador · combustíveis com calculadora flex · avaliações pessoais · sugestões explicadas · listas com comparação da lista inteira · histórico de compras · orçamento · backup e restauração · PWA offline · tema claro/escuro/automático.
+Produtos, marcas e categorias · mercados · postos · preços · comparador · combustíveis com calculadora flex · avaliações pessoais · sugestões explicadas · listas com comparação da lista inteira · histórico de compras · orçamento · backup e restauração · PWA offline · tema claro/escuro/automático · app Android (Capacitor) · importação de nota fiscal (NFC-e de SC) · boas-vindas e apresentação guiada.
 
 ## Fase 2 — Inteligência
 
 - **Alertas de preço:** “avise quando o arroz ficar abaixo de R$ X” (local, verificado ao registrar preços; notificações push dependem de suporte do navegador).
 - **Leitor de código de barras:** `BarcodeDetector` onde existir, com alternativa em WebAssembly (ex.: ZXing) para iOS. O campo `barcode` já existe e é indexado.
-- **Importação de nota fiscal (NFC-e):** ler o QR Code e importar itens. As consultas são públicas, mas cada estado tem seu portal e muitas bloqueiam acesso direto do navegador (CORS), o que provavelmente exige um proxy. Isso conflita com o local-first e precisa de decisão.
+- **Nota fiscal de outros estados:** a importação já funciona para SC no app Android (a consulta abre numa tela nativa, sem proxy). Falta testar e ajustar outros estados que seguem o layout nacional e decidir o que fazer com estados que exigem captcha interativo.
+- **Backup automático na nuvem:** opção de salvar o backup no Google Drive da própria pessoa, com o banco continuando local.
 - **Tendências:** projeção simples de preço e sazonalidade por produto.
 - **Dados públicos da ANP:** o levantamento semanal de preços de combustíveis é público (dados.gov.br). Proposta: tabela separada `referencePrices` (somente leitura, com fonte e data), baixada sob demanda pelo usuário e **nunca misturada** com os preços que ele anotou. O app passa a mostrar “média da ANP no município” como referência. Só implementar depois de confirmar formato, licença e frequência dos dados.
 

@@ -9,6 +9,16 @@ let openCount = 0;
 /** Pilha de painéis abertos: Esc (ou o voltar do Android) fecha só o do topo. */
 const stack: { token: symbol; close: () => void }[] = [];
 
+/** Registra uma camada que o voltar do Android deve fechar (ex.: a apresentação guiada). Devolve a função que a remove. */
+export function pushBackLayer(close: () => void): () => void {
+  const token = Symbol('layer');
+  stack.push({ token, close });
+  return () => {
+    const i = stack.findIndex((x) => x.token === token);
+    if (i >= 0) stack.splice(i, 1);
+  };
+}
+
 /** Fecha o painel do topo, se houver. Usado pelo botão voltar do Android. */
 export function closeTopSheet(): boolean {
   const top = stack[stack.length - 1];

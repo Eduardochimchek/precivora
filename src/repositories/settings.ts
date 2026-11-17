@@ -13,6 +13,7 @@ export const DEFAULT_SETTINGS: Settings = {
   monthlyBudget: 0,
   savingsGoal: 0,
   onboardingDone: false,
+  checklistHidden: false,
 };
 
 export async function getSettings(): Promise<Settings> {

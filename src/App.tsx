@@ -3,6 +3,7 @@ import { HashRouter, Navigate, Route, Routes, useNavigate } from 'react-router-d
 import { AppShell } from '@/components/AppShell';
 import { UpdatePrompt } from '@/components/UpdatePrompt';
 import { isNative } from '@/app/native';
+import { OnboardingProvider } from '@/features/onboarding/OnboardingContext';
 import { FeedbackProvider, ListSkeleton, Skeleton } from '@/design-system';
 import { ActionsProvider, useActions } from '@/features/forms/ActionsContext';
 import { SettingsProvider } from '@/app/SettingsContext';
@@ -11,6 +12,7 @@ import { DashboardPage } from '@/features/dashboard/DashboardPage';
 import type { Settings } from '@/types';
 
 const ComparePage = lazy(() => import('@/features/compare/ComparePage'));
+const ImportReceiptPage = lazy(() => import('@/features/receipts/ImportReceiptPage'));
 const ProductDetailPage = lazy(() => import('@/features/products/ProductDetailPage'));
 const ProductsPage = lazy(() => import('@/features/products/ProductsPage'));
 const FuelPage = lazy(() => import('@/features/fuel/FuelPage'));
@@ -55,6 +57,7 @@ export default function App({ settings }: { settings: Settings }) {
         <FeedbackProvider>
           <HashRouter>
             <ActionsProvider>
+              <OnboardingProvider>
               <Suspense fallback={<PageFallback />}>
                 <Routes>
                   <Route element={<AppShell />}>
@@ -75,6 +78,7 @@ export default function App({ settings }: { settings: Settings }) {
                     <Route path="listas/:id" element={<ListDetailPage />} />
                     <Route path="historico" element={<HistoryPage />} />
                     <Route path="compras/nova" element={<PurchaseFormPage />} />
+                    <Route path="notas/importar" element={<ImportReceiptPage />} />
                     <Route path="compras/:id" element={<PurchaseFormPage />} />
                     <Route path="marcas" element={<BrandsPage />} />
                     <Route path="avaliacoes" element={<ReviewsPage />} />
@@ -86,6 +90,7 @@ export default function App({ settings }: { settings: Settings }) {
                   </Route>
                 </Routes>
               </Suspense>
+              </OnboardingProvider>
               {!isNative && <UpdatePrompt />}
             </ActionsProvider>
           </HashRouter>

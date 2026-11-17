@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Monitor, Moon, Sun, Trash2 } from 'lucide-react';
+import { Compass, ListChecks, Monitor, Moon, Sun, Trash2 } from 'lucide-react';
+import { useOnboarding } from '@/features/onboarding/OnboardingContext';
 import { PageHeader } from '@/components/PageHeader';
 import { Button, Card, Section, Segmented, TextField, useFeedback } from '@/design-system';
 import { useSettings } from '@/app/SettingsContext';
@@ -12,6 +13,7 @@ import type { ThemePreference } from '@/types';
 export default function SettingsPage() {
   const navigate = useNavigate();
   const { settings, update } = useSettings();
+  const { startTour } = useOnboarding();
   const { toast, confirm } = useFeedback();
   const [name, setName] = useState(settings.userName);
   const [stale, setStale] = useState(String(settings.staleDays));
@@ -64,6 +66,19 @@ export default function SettingsPage() {
           ]}
         />
         <p className="text-xs text-muted">Automático segue o tema do seu sistema.</p>
+      </Section>
+
+      <Section title="Ajuda" id="ajuda">
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" icon={<Compass className="h-4 w-4" />} onClick={startTour}>
+            Rever apresentação
+          </Button>
+          {settings.checklistHidden && (
+            <Button variant="secondary" icon={<ListChecks className="h-4 w-4" />} onClick={() => update({ checklistHidden: false }).then(() => toast('Primeiros passos de volta no início'))}>
+              Mostrar primeiros passos
+            </Button>
+          )}
+        </div>
       </Section>
 
       <Section title="Preferências" id="preferencias">

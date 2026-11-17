@@ -32,8 +32,9 @@ features (telas) ──lê──▶ hooks/useData (useLiveQuery) ──▶ db (D
 | `categoryBudgets` | limite por categoria | `&categoryId` |
 | `activities` | últimas atividades (máx. 300) | `createdAt` |
 | `settings` | preferências (chave/valor) | `key` |
+| `receiptLinks` | vínculo “item da nota neste lugar → produto” (pelo código do item ou pela descrição) | `placeId`, `[placeId+key]` |
 
-**Versionamento:** cada mudança de esquema ganha um `this.version(n)` com `upgrade()` em `db/database.ts` e o `SCHEMA_VERSION` sobe. A v2 criou a chave de busca sem acentos; a v3 criou os tipos de lugar, moveu os postos para `stores` com o tipo Combustível (mantendo os IDs, então preços e compras continuam ligados) e removeu a tabela `stations`. Os tipos padrão têm IDs fixos (`seg-mercado`, `seg-farmacia`, `seg-combustivel`) para backups de aparelhos diferentes se reconhecerem. O backup grava o `schemaVersion`: arquivos antigos são migrados ao importar e arquivos de versões mais novas são recusados com uma mensagem clara.
+**Versionamento:** cada mudança de esquema ganha um `this.version(n)` com `upgrade()` em `db/database.ts` e o `SCHEMA_VERSION` sobe. A v2 criou a chave de busca sem acentos; a v3 criou os tipos de lugar, moveu os postos para `stores` com o tipo Combustível (mantendo os IDs, então preços e compras continuam ligados) e removeu a tabela `stations`; a v4 trouxe a importação de nota fiscal (CNPJ do lugar, `receiptKey` na compra e no preço de combustível, tabela `receiptLinks`). Os tipos padrão têm IDs fixos (`seg-mercado`, `seg-farmacia`, `seg-combustivel`) para backups de aparelhos diferentes se reconhecerem. O backup grava o `schemaVersion`: arquivos antigos são migrados ao importar e arquivos de versões mais novas são recusados com uma mensagem clara.
 
 **IDs** são UUID v4 gerados no aparelho. Isso permite mesclar backups sem colisão e, no futuro, sincronizar sem depender de um servidor para numerar registros.
 
@@ -60,4 +61,18 @@ features (telas) ──lê──▶ hooks/useData (useLiveQuery) ──▶ db (D
 - Imagens de produto são reduzidas no aparelho (máx. 480 px, cerca de 300 KB) e só aceitas como `data:image/(jpeg|png|webp)`.
 - CSV exportado neutraliza fórmulas (`=`, `+`, `-`, `@`) para evitar injeção ao abrir no Excel.
 - React escapa todo o conteúdo; não há `dangerouslySetInnerHTML`.
-- Sem segredos, sem variáveis de ambiente, sem chamadas a APIs.
+- Sem segredos, sem variáveis de ambiente, sem chamadas a APIs próprias.
+- Nota fiscal: a página da Fazenda abre numa tela nativa separada (`NfceBrowserActivity`), só com `https://`. O app não automatiza nem contorna a verificação de segurança do site: quem passa por ela é a pessoa. Depois disso, o app lê o HTML que já está na tela, interpreta com `DOMParser` (sem executar nada dele) e valida tudo antes de gravar.
+
+## Nota fiscal (NFC-e)
+
+```
+QR Code (leitor do Google) ─▶ link da Fazenda ─▶ tela nativa com WebView (verificação feita pela pessoa)
+     └─ ou chave digitada ─▶ consulta de SC        └─▶ HTML da nota ─▶ services/nfce (leitura pura, testada)
+                                                     ─▶ repositories/receipts (lugar pelo CNPJ, produtos pelos vínculos)
+                                                     ─▶ tela de conferência ─▶ compra + preços confirmados (ou preços de combustível)
+```
+
+- `services/nfce.ts` lê o layout nacional da consulta (classes `txtTit`, `Rqtd`, `RUN`, `RvlUnit`, `valor`) e, se elas faltarem, o texto da página. Também extrai a chave, sugere a embalagem pela descrição (“5KG”, “2L”) e o combustível pela descrição do item.
+- A importação roda numa transação: lugar novo, produtos novos, vínculos e a compra entram juntos ou nada entra.
+- A mesma chave não é importada duas vezes.

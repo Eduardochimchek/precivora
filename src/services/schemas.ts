@@ -53,6 +53,7 @@ export const placeSchema = z.object({
   notes: text(1000),
   color,
   active: z.boolean(),
+  cnpj: z.string().regex(/^\d{14}$/).optional(),
   ...stamps,
 });
 export const priceSchema = z.object({
@@ -76,6 +77,7 @@ export const fuelPriceSchema = z.object({
   date: iso,
   promo: z.boolean(),
   notes: text(500),
+  receiptKey: z.string().regex(/^\d{44}$/).optional(),
   ...stamps,
 });
 export const reviewSchema = z.object({
@@ -91,7 +93,8 @@ export const reviewSchema = z.object({
   date: iso,
   ...stamps,
 });
-export const purchaseSchema = z.object({ id, storeId: id, date: iso, total: money, notes: text(1000), ...stamps });
+export const purchaseSchema = z.object({ id, storeId: id, date: iso, total: money, notes: text(1000), receiptKey: z.string().regex(/^\d{44}$/).optional(), ...stamps });
+export const receiptLinkSchema = z.object({ id, placeId: id, key: z.string().min(3).max(200), description: z.string().min(1).max(200), productId: id, ...stamps });
 export const purchaseItemSchema = z.object({
   id,
   purchaseId: id,
@@ -136,6 +139,7 @@ export const tableSchemas = {
   categoryBudgets: categoryBudgetSchema,
   activities: activitySchema,
   settings: settingSchema,
+  receiptLinks: receiptLinkSchema,
 } as const;
 
 /** Primeira mensagem de erro legível de um resultado do zod. */

@@ -80,6 +80,8 @@ export interface Place extends Timestamps {
   city?: string;
   /** Bandeira (só para postos). */
   flag?: string;
+  /** CNPJ (só dígitos), usado para reconhecer o lugar ao importar nota fiscal. */
+  cnpj?: string;
   notes?: string;
   color: string;
   active: boolean;
@@ -117,6 +119,8 @@ export interface FuelPrice extends Timestamps {
   date: ISODate;
   promo: boolean;
   notes?: string;
+  /** Chave da NFC-e de onde o preço foi importado. */
+  receiptKey?: string;
 }
 
 export type ReviewTarget = 'product' | 'brand';
@@ -141,6 +145,18 @@ export interface Purchase extends Timestamps {
   date: ISODate;
   total: number;
   notes?: string;
+  /** Chave de acesso da NFC-e quando a compra veio de uma nota fiscal (evita importar duas vezes). */
+  receiptKey?: string;
+}
+
+/** Lembra a qual produto um item da nota de um lugar corresponde. */
+export interface ReceiptLink extends Timestamps {
+  id: ID;
+  placeId: ID;
+  /** "c:<código do item no lugar>" ou "d:<descrição normalizada>". */
+  key: string;
+  description: string;
+  productId: ID;
 }
 
 export interface PurchaseItem {
@@ -214,6 +230,8 @@ export interface Settings {
   monthlyBudget: number;
   savingsGoal: number;
   onboardingDone: boolean;
+  /** Esconde a lista de primeiros passos do início. */
+  checklistHidden: boolean;
   lastBackupAt?: ISODate;
 }
 

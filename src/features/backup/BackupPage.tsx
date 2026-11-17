@@ -86,6 +86,7 @@ export default function BackupPage() {
     setBusy(true);
     try {
       const n = await applyBackup(analysis, mode);
+      await update({ onboardingDone: true });
       toast(mode === 'replace' ? 'Backup restaurado' : `${n} registros adicionados`);
       setAnalysis(null);
       setText('');

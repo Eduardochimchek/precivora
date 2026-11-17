@@ -1,22 +1,26 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
   ArrowDownRight,
+  Check,
   ChevronRight,
   Fuel,
   ListChecks,
   MapPin,
   Package,
   PackagePlus,
+  ScanLine,
   ShieldCheck,
   ShoppingCart,
   Star,
   Store,
   Tag,
+  X,
 } from 'lucide-react';
 import { db } from '@/db/database';
-import { Button, Card, Chip, ListSkeleton, LogoSymbol, PlaceMark, PriceTag, ProgressBar, Section, Skeleton, TextField, cx } from '@/design-system';
+import { Card, Chip, IconButton, ListSkeleton, LogoSymbol, PlaceMark, PriceTag, ProgressBar, Section, Skeleton, cx } from '@/design-system';
+import { isNative } from '@/app/native';
 import { useSettings } from '@/app/SettingsContext';
 import { useActions } from '@/features/forms/ActionsContext';
 import { useBrands, useFuelPrices, useMapById, usePrices, useProducts, usePurchaseItems, usePurchases, useStations, useStores } from '@/hooks/useData';
@@ -59,7 +63,7 @@ export function DashboardPage() {
   const activities = useLiveQuery(() => db.activities.orderBy('createdAt').reverse().limit(6).toArray(), []);
 
   const loading = !products || !stores || !stations || !prices || !fuelPrices || !purchases || !items;
-  const empty = !loading && products!.length === 0 && stores!.length === 0 && stations!.length === 0;
+  const listCount = useLiveQuery(() => db.lists.count(), []);
 
   const month = useMemo(() => {
     if (!purchases || !items || !prices) return null;
@@ -118,10 +122,47 @@ export function DashboardPage() {
           <Skeleton className="h-44 w-full rounded-2xl" />
           <ListSkeleton rows={3} />
         </div>
-      ) : empty ? (
-        <Onboarding onName={(n) => update({ userName: n, onboardingDone: true })} initialName={settings.userName} />
       ) : (
         <>
+          {isNative ? (
+            <Link to="/notas/importar?auto=1" data-tour="scan" className="group -mt-2 flex items-center gap-4 rounded-2xl bg-lime p-4 text-navy shadow-card transition-[filter] hover:brightness-95 active:brightness-90">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-navy text-lime">
+                <ScanLine className="h-6 w-6" aria-hidden />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-lg font-bold leading-tight">Escanear nota fiscal</span>
+                <span className="text-sm text-navy/75">Lugar, produtos e preços de uma vez</span>
+              </span>
+              <ChevronRight className="h-5 w-5 shrink-0 transition-transform group-hover:translate-x-0.5" aria-hidden />
+            </Link>
+          ) : (
+            <button type="button" data-tour="scan" onClick={() => actions.openPrice()} className="group -mt-2 flex items-center gap-4 rounded-2xl bg-lime p-4 text-left text-navy shadow-card transition-[filter] hover:brightness-95 active:brightness-90">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-navy text-lime">
+                <Tag className="h-6 w-6" aria-hidden />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-lg font-bold leading-tight">Registrar preço</span>
+                <span className="text-sm text-navy/75">Anote o que viu na prateleira</span>
+              </span>
+              <ChevronRight className="h-5 w-5 shrink-0" aria-hidden />
+            </button>
+          )}
+
+          {!settings.checklistHidden && (
+            <FirstSteps
+              steps={[
+                ...(isNative
+                  ? [{ label: 'Escanear sua primeira nota fiscal', done: purchases!.some((p) => !!p.receiptKey), to: '/notas/importar?auto=1' }]
+                  : []),
+                { label: 'Cadastrar um lugar', done: stores!.length + stations!.length > 0, onClick: () => actions.openPlace({ mode: 'items' }) },
+                { label: 'Registrar um preço', done: prices!.length + fuelPrices!.length > 0, onClick: () => actions.openPrice() },
+                { label: 'Montar uma lista de compras', done: (listCount ?? 0) > 0, to: '/listas' },
+                { label: 'Fazer o primeiro backup', done: !!settings.lastBackupAt, to: '/backup' },
+              ]}
+              onHide={() => update({ checklistHidden: true })}
+            />
+          )}
+
           <SavingsPanel
             savings={month?.savings ?? 0}
             spent={month?.spent ?? 0}
@@ -131,10 +172,10 @@ export function DashboardPage() {
             level={level}
           />
 
-          <nav aria-label="Atalhos" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-none md:mx-0 md:px-0">
-            <Shortcut icon={Tag} label="Registrar preço" onClick={() => actions.openPrice()} primary />
-            <Shortcut icon={Fuel} label="Combustível" onClick={() => actions.openFuel()} />
-            <Shortcut icon={ShoppingCart} label="Nova compra" to="/compras/nova" />
+          <nav aria-label="Atalhos" data-tour="shortcuts" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-none md:mx-0 md:px-0">
+            {isNative && <Shortcut icon={Tag} label="Registrar preço" onClick={() => actions.openPrice()} primary />}
+            <Shortcut icon={Fuel} label="Combustível" onClick={() => actions.openFuel()} primary={!isNative} />
+            <Shortcut icon={ShoppingCart} label="Compra sem nota" to="/compras/nova" />
             <Shortcut icon={PackagePlus} label="Produto" onClick={() => actions.openProduct()} />
             <Shortcut icon={MapPin} label="Lugar" onClick={() => actions.openPlace({ mode: 'items' })} />
           </nav>
@@ -367,69 +408,67 @@ function Counter({ label, value, to }: { label: string; value: number; to: strin
   );
 }
 
-function Onboarding({ onName, initialName }: { onName: (n: string) => void; initialName: string }) {
-  const actions = useActions();
-  const [name, setName] = useState(initialName);
-  return (
-    <div className="flex flex-col gap-6">
-      <section className="relative overflow-hidden rounded-2xl bg-navy p-6 text-[#F1F5F9] dark:bg-raised md:p-8">
-        <LogoSymbol className="h-12 w-12 text-[#F7F9FC]" accentClass="text-lime" />
-        <h2 className="mt-5 text-[28px] font-bold leading-tight">Descubra onde comprar, o que comprar e quanto economizar.</h2>
-        <p className="mt-3 max-w-md text-sm text-[#CBD5E1]">
-          Anote os preços que você vê, compare mercados, farmácias, postos e o que mais quiser, e avalie o que compra. Sem cadastro e sem internet: tudo fica guardado neste aparelho.
-        </p>
-        <form
-          className="mt-5 flex max-w-sm items-end gap-2 [&_input]:border-white/15 [&_input]:bg-white/10 [&_input]:text-white [&_label]:text-[#CBD5E1]"
-          onSubmit={(e) => {
-            e.preventDefault();
-            onName(name.trim());
-          }}
-        >
-          <TextField label="Como podemos te chamar?" optional value={name} onChange={(e) => setName(e.target.value)} maxLength={40} wrapperClassName="flex-1" />
-          <Button type="submit" variant="save" className="h-12">
-            Salvar
-          </Button>
-        </form>
-      </section>
-
-      <section aria-labelledby="passos">
-        <h2 id="passos" className="mb-3 text-lg font-bold">
-          Comece em três passos
-        </h2>
-        <ol className="flex flex-col gap-2">
-          <Step n={1} title="Cadastre os lugares onde você compra" onClick={() => actions.openPlace({ mode: 'items' })} icon={Store} />
-          <Step n={2} title="Cadastre os produtos que você compra" onClick={() => actions.openProduct()} icon={Package} />
-          <Step n={3} title="Registre os preços que encontrar" onClick={() => actions.openPrice()} icon={Tag} />
-        </ol>
-        <button
-          onClick={() => actions.openPlace({ mode: 'fuel' })}
-          className="mt-3 flex w-full items-center gap-3 rounded-lg border border-dashed border-line p-4 text-left text-sm hover:bg-sunken"
-        >
-          <Fuel className="h-5 w-5 text-accent" aria-hidden />
-          <span className="flex-1">Só quer comparar combustível? Comece cadastrando um posto.</span>
-          <ChevronRight className="h-4 w-4 text-muted" aria-hidden />
-        </button>
-      </section>
-
-      <Link to="/backup" className="flex items-start gap-3 rounded-lg bg-surface p-4 text-sm shadow-card hover:bg-sunken">
-        <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-success" aria-hidden />
-        <span>
-          <strong className="block">Seus dados não saem do aparelho.</strong>
-          <span className="text-muted">Por isso, faça backups de vez em quando. Já tem um? Restaure em Backup.</span>
-        </span>
-      </Link>
-    </div>
-  );
+interface FirstStep {
+  label: string;
+  done: boolean;
+  to?: string;
+  onClick?: () => void;
 }
 
-function Step({ n, title, onClick, icon: Icon }: { n: number; title: string; onClick: () => void; icon: typeof Tag }) {
+function FirstSteps({ steps, onHide }: { steps: FirstStep[]; onHide: () => void }) {
+  const done = steps.filter((s) => s.done).length;
+  if (done === steps.length) return null;
   return (
-    <li>
-      <button onClick={onClick} className="flex w-full items-center gap-4 rounded-lg bg-surface p-4 text-left shadow-card hover:bg-sunken">
-        <span className="price flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sunken text-lg font-bold">{n}</span>
-        <span className="flex-1 font-semibold">{title}</span>
-        <Icon className="h-5 w-5 text-muted" aria-hidden />
-      </button>
-    </li>
+    <section aria-labelledby="primeiros-passos" className="rounded-2xl bg-surface p-4 shadow-card">
+      <div className="mb-3 flex items-center gap-3">
+        <div className="min-w-0 flex-1">
+          <h2 id="primeiros-passos" className="font-bold">
+            Primeiros passos
+          </h2>
+          <p className="text-xs text-muted">
+            {done} de {steps.length} concluídos
+          </p>
+        </div>
+        <IconButton label="Ocultar primeiros passos" className="-mr-2" onClick={onHide}>
+          <X className="h-4 w-4" />
+        </IconButton>
+      </div>
+      <ProgressBar value={done / steps.length} tone="ok" label="Primeiros passos concluídos" />
+      <ul className="mt-2 flex flex-col">
+        {steps.map((s) => {
+          const inner = (
+            <>
+              <span
+                className={cx(
+                  'flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2',
+                  s.done ? 'border-transparent bg-lime-ink text-white dark:bg-lime dark:text-navy' : 'border-line',
+                )}
+              >
+                {s.done && <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden />}
+              </span>
+              <span className={cx('flex-1 text-sm', s.done ? 'text-muted line-through' : 'font-semibold')}>{s.label}</span>
+              {!s.done && <ChevronRight className="h-4 w-4 text-muted" aria-hidden />}
+              <span className="sr-only">{s.done ? '(concluído)' : ''}</span>
+            </>
+          );
+          const cls = 'flex min-h-11 w-full items-center gap-3 rounded-md py-2 text-left';
+          return (
+            <li key={s.label}>
+              {s.done ? (
+                <div className={cls}>{inner}</div>
+              ) : s.to ? (
+                <Link to={s.to} className={cx(cls, 'hover:bg-sunken')}>
+                  {inner}
+                </Link>
+              ) : (
+                <button type="button" onClick={s.onClick} className={cx(cls, 'hover:bg-sunken')}>
+                  {inner}
+                </button>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }

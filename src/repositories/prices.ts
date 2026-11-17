@@ -60,6 +60,7 @@ export interface FuelPriceInput {
   date: string;
   promo?: boolean;
   notes?: string;
+  receiptKey?: string;
 }
 
 export async function saveFuelPrice(input: FuelPriceInput, id?: ID): Promise<FuelPrice> {
@@ -73,6 +74,7 @@ export async function saveFuelPrice(input: FuelPriceInput, id?: ID): Promise<Fue
     date: input.date,
     promo: !!input.promo,
     notes: cleanText(input.notes, 500),
+    receiptKey: input.receiptKey ?? prev?.receiptKey,
     createdAt: prev?.createdAt ?? now,
     updatedAt: now,
   });

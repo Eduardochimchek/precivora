@@ -7,24 +7,33 @@ Descubra onde comprar, o que comprar e quanto economizar.</p>
 
 ---
 
-O **Precivora** é um app de inteligência de consumo **local-first**: você anota os preços que encontra (no mercado, na farmácia, no posto ou em qualquer lugar que quiser cadastrar), avalia o que compra e o app mostra onde está mais barato, quanto você economiza e qual produto vale mais a pena. Não precisa de conta nem de internet. **Os dados ficam no seu aparelho.**
+O **Precivora** é um app de inteligência de consumo **local-first**: você escaneia a nota fiscal ou anota os preços que encontra (no mercado, na farmácia, no posto ou em qualquer lugar que quiser cadastrar), avalia o que compra e o app mostra onde está mais barato, quanto você economiza e qual produto vale mais a pena. Não precisa de conta. **Os dados ficam no seu aparelho.** Roda como app Android e como PWA no navegador, com o mesmo código.
 
 <p align="center">
   <img src="docs/screenshots/05-inicio.png" width="200" alt="Início" />
+  <img src="docs/screenshots/40-conferir-nota.png" width="200" alt="Conferência da nota fiscal escaneada" />
   <img src="docs/screenshots/06-comparar-arroz.png" width="200" alt="Comparador" />
-  <img src="docs/screenshots/22-combustiveis-escuro.png" width="200" alt="Combustíveis no tema escuro" />
   <img src="docs/screenshots/09-lista.png" width="200" alt="Lista inteligente" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/01-boas-vindas.png" width="200" alt="Boas-vindas" />
+  <img src="docs/screenshots/02-apresentacao.png" width="200" alt="Apresentação guiada" />
+  <img src="docs/screenshots/22-combustiveis-escuro.png" width="200" alt="Combustíveis no tema escuro" />
+  <img src="docs/screenshots/41-item-da-nota-escuro.png" width="200" alt="Item da nota no tema escuro" />
 </p>
 
 <p align="center"><img src="docs/screenshots/31-desktop-inicio.png" width="720" alt="Versão desktop" /></p>
 
-<sub>As capturas usam dados fictícios de demonstração.</sub>
+<sub>As capturas usam dados fictícios de demonstração, inclusive a nota fiscal.</sub>
 
 ## O que ele faz
 
 | Módulo | O que tem |
 |---|---|
-| **Início** | Economia estimada do mês, orçamento, oportunidades (produtos abaixo da sua média), combustível mais barato, últimos preços e atividade. Onboarding quando o banco está vazio. |
+| **Primeira abertura** | Boas-vindas com o nome perguntado uma única vez e apresentação guiada que passa pelas telas destacando cada parte. Dá para rever nos Ajustes. |
+| **Início** | Atalho grande para escanear a nota (no app) ou registrar preço, primeiros passos com progresso (some ao concluir ou ao ocultar), economia estimada do mês, orçamento, oportunidades (produtos abaixo da sua média), combustível mais barato, últimos preços e atividade. |
+| **Nota fiscal (NFC-e)** | No app Android: escaneia o QR Code do cupom (ou digita a chave), abre a consulta no site da Fazenda dentro do app e lê lugar, itens, quantidades e valores. Na conferência, cada item vira produto novo (nome legível e embalagem sugerida), produto já cadastrado ou é ignorado. O lugar é reconhecido pelo CNPJ, os produtos pelos vínculos das notas anteriores, e a mesma nota não entra duas vezes. Nota de posto vira preço de combustível. Feito para Santa Catarina; o leitor segue o layout nacional da consulta. |
 | **Lugares e tipos** | Mercado, Farmácia e Combustível vêm prontos; você cria outros tipos (Pet shop, Padaria, Construção…) com ícone e cor. Lugares ilimitados de cada tipo, com cor, bairro, cidade e ativo/inativo. |
 | **Itens** | Cadastro genérico: só o nome é obrigatório, foto opcional. Em “Mais detalhes”: marca, categoria (por tipo de lugar), código de barras e embalagem em kg/g/L/ml/unidade/pacote/caixa/dúzia para comparar por unidade. Arquivar, editar e excluir. |
 | **Registro de preço** | Formulário rápido com busca de produto, “salvar e próximo”, preço por unidade calculado na hora e variação contra o último preço (ex.: R$ 25,90 → R$ 23,90 = −7,72%). Suporta “leve 3 por R$ 10”. |
@@ -33,7 +42,7 @@ O **Precivora** é um app de inteligência de consumo **local-first**: você ano
 | **Combustíveis** | Tipo especializado: postos com bandeira, sete combustíveis, ranking do último preço anotado por posto, diferença por litro, economia em 30/40/50 L (configurável) e calculadora flex com rendimento editável (70% é só referência) ou por km/L. |
 | **Avaliações** | Notas pessoais de produto e de marca (geral, qualidade, custo-benefício), comentário, favorito e “não comprar novamente”. |
 | **Listas** | Itens com quantidade e prioridade, marcar comprado, duplicar, arquivar. Comparador da lista inteira: total por lugar (pode misturar mercado e farmácia), compra dividida otimizada **com custo de deslocamento** e preferência por um único lugar. |
-| **Histórico** | Compras reais (viram preço confirmado), gasto por mês, categorias com mais gastos, produtos que mais subiram e caíram, exportação CSV. |
+| **Histórico** | Escanear nota ou registrar compra sem nota, compras reais (viram preço confirmado), gasto por mês, categorias com mais gastos, produtos que mais subiram e caíram, exportação CSV. |
 | **Orçamento** | Orçamento mensal, meta de economia e limite por categoria com alerta em 80% e 100%. |
 | **Backup** | Exporta tudo em JSON (no celular, "Enviar backup" abre o compartilhamento: Drive, WhatsApp, e-mail) e guia a troca de celular; importa validando estrutura, versão e integridade, mostrando o resumo antes; modos *mesclar* (sem duplicar) e *substituir tudo*. |
 | **PWA** | Instalável, funciona offline, aviso de nova versão (atualizar não apaga os dados), tema claro/escuro/automático com `theme-color` sincronizado. |
@@ -61,7 +70,7 @@ Para o e2e, o Playwright precisa do Chromium: `npx playwright install chromium`.
 
 ### App Android
 
-O mesmo código vira um app Android de verdade com [Capacitor](https://capacitorjs.com) (pasta `android/`). No app, os dados ficam dentro dele (não no armazenamento do Chrome), o backup usa o compartilhamento do Android e salva em `Documentos/Precivora`, o botão voltar fecha painéis e o tema segue o modo escuro do sistema.
+O mesmo código vira um app Android de verdade com [Capacitor](https://capacitorjs.com) (pasta `android/`). No app, os dados ficam dentro dele (não no armazenamento do Chrome), a abertura tem animação da marca, a nota fiscal é escaneada pelo leitor de QR Code do Google (sem pedir permissão de câmera) e consultada numa tela própria, o backup usa o compartilhamento do Android e salva em `Documentos/Precivora`, o botão voltar fecha painéis e o tema segue o modo escuro do sistema.
 
 Requer JDK 17 e o Android SDK (`ANDROID_HOME` apontando para ele).
 
@@ -78,10 +87,10 @@ O build é estático (`dist/`) e usa rotas com `#`, então funciona em qualquer 
 
 ## Privacidade
 
-- Sem login, sem servidor, sem anúncios, sem rastreadores, sem chamadas de rede com seus dados.
-- Tudo fica no **IndexedDB** do navegador. O app pede armazenamento persistente para reduzir o risco de o navegador apagar os dados.
-- Limpar os dados do navegador ou trocar de aparelho **apaga os registros**. Por isso o app lembra de fazer backup e mostra quando foi o último.
-- O único link externo é o “Abrir no mapa” de um lugar com endereço, e só quando você toca nele.
+- Sem login, sem servidor do Precivora, sem anúncios, sem rastreadores.
+- Tudo fica no **IndexedDB** do aparelho (no app Android, dentro do próprio app). O PWA pede armazenamento persistente para reduzir o risco de o navegador apagar os dados.
+- Desinstalar o app, limpar os dados do navegador ou trocar de aparelho **apaga os registros**. Por isso o app lembra de fazer backup, mostra quando foi o último e, no celular, envia o arquivo pelo compartilhamento do sistema.
+- Acessos à internet, sempre por ação sua: a consulta da nota fiscal, feita direto no site da Secretaria da Fazenda (o app só lê a página que a Fazenda mostra), o leitor de QR Code do Google Play, baixado pelo próprio Android na primeira vez, e o “Abrir no mapa” de um lugar com endereço.
 
 ## Arquitetura
 
@@ -102,7 +111,7 @@ src/
 
 ## Roadmap
 
-A **Fase 1 (MVP)** está completa. As próximas fases (alertas de preço, leitor de código de barras, importação de nota fiscal, contas, sincronização, preços colaborativos, dados públicos da ANP) estão em [docs/ROADMAP.md](docs/ROADMAP.md).
+A **Fase 1 (MVP)** está completa, com app Android e importação de nota fiscal de SC. As próximas fases (alertas de preço, leitor de código de barras, notas de outros estados, backup automático na nuvem, contas, sincronização, preços colaborativos, dados públicos da ANP) estão em [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Marca
 

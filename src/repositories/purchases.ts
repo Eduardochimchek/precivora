@@ -12,6 +12,7 @@ export interface PurchaseInput {
   storeId: ID;
   date: string;
   notes?: string;
+  receiptKey?: string;
   items: { productId: ID; quantity: number; unitPrice: number }[];
 }
 
@@ -33,6 +34,7 @@ export async function savePurchase(input: PurchaseInput, id?: ID): Promise<ID> {
     date: input.date,
     total: purchaseTotal(input.items),
     notes: cleanText(input.notes, 1000),
+    receiptKey: input.receiptKey ?? prev?.receiptKey,
     createdAt: prev?.createdAt ?? now,
     updatedAt: now,
   });

@@ -1,5 +1,5 @@
 import Dexie from 'dexie';
-import { DEFAULT_CATEGORIES, PrecivoraDB } from '@/db/database';
+import { DEFAULT_CATEGORIES, PrecivoraDB, SCHEMA_VERSION } from '@/db/database';
 import { SEG_COMBUSTIVEL, SEG_MERCADO } from '@/db/defaults';
 
 describe('migração do banco', () => {
@@ -36,7 +36,7 @@ describe('migração do banco', () => {
 
     const v2 = new PrecivoraDB(name);
     await v2.open();
-    expect(v2.verno).toBe(3);
+    expect(v2.verno).toBe(SCHEMA_VERSION);
     expect((await v2.products.get('p1'))!.nameKey).toBe('feijao carioca');
     expect((await v2.brands.get('b1'))!.nameKey).toBe('camil');
     expect((await v2.segments.toArray()).map((s) => s.id).sort()).toEqual(['seg-combustivel', 'seg-farmacia', 'seg-mercado']);

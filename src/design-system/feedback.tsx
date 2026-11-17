@@ -56,7 +56,7 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
       {children}
       {createPortal(
         <div
-          className="pointer-events-none fixed inset-x-0 bottom-[calc(var(--nav-h)+env(safe-area-inset-bottom)+12px)] z-[60] flex flex-col items-center gap-2 px-4 md:bottom-6"
+          data-toasts className="pointer-events-none fixed inset-x-0 bottom-[calc(var(--nav-h)+env(safe-area-inset-bottom)+12px)] z-[60] flex flex-col items-center gap-2 px-4 md:bottom-6"
           aria-live="polite"
           aria-atomic="false"
         >

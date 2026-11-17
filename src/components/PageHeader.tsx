@@ -6,7 +6,7 @@ import { IconButton } from '@/design-system';
 export function PageHeader({ title, subtitle, back, actions }: { title: string; subtitle?: ReactNode; back?: boolean | string; actions?: ReactNode }) {
   const navigate = useNavigate();
   return (
-    <header className="flex items-start gap-2 pb-5 pt-5 md:pt-9">
+    <header className="flex flex-wrap items-start gap-x-2 gap-y-3 pb-5 pt-5 md:pt-9">
       {back && (
         <IconButton
           label="Voltar"
@@ -16,11 +16,11 @@ export function PageHeader({ title, subtitle, back, actions }: { title: string; 
           <ArrowLeft className="h-5 w-5" />
         </IconButton>
       )}
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 basis-48">
         <h1 className="text-balance text-[28px] font-bold leading-[1.1] md:text-[34px]">{title}</h1>
         {subtitle && <div className="mt-1.5 text-sm text-muted">{subtitle}</div>}
       </div>
-      {actions && <div className="flex shrink-0 items-center gap-1 pt-0.5">{actions}</div>}
+      {actions && <div className="ml-auto flex shrink-0 items-center gap-1 pt-0.5">{actions}</div>}
     </header>
   );
 }

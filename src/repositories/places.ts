@@ -17,6 +17,8 @@ export interface PlaceInput {
   color: string;
   active: boolean;
   flag?: string;
+  /** Mantido quando omitido (o formulário não edita o CNPJ). */
+  cnpj?: string;
 }
 
 /** Cria ou atualiza um lugar (mercado, farmácia, posto...). */
@@ -43,6 +45,7 @@ export async function savePlace(input: PlaceInput, id?: ID): Promise<ID> {
     neighborhood: cleanText(input.neighborhood, 80),
     city: cleanText(input.city, 80),
     flag: segment.mode === 'fuel' ? cleanText(input.flag, 60) : undefined,
+    cnpj: input.cnpj ?? prev?.cnpj,
     notes: cleanText(input.notes, 1000),
     color: input.color,
     active: input.active,
@@ -58,7 +61,8 @@ export async function savePlace(input: PlaceInput, id?: ID): Promise<ID> {
 export async function deletePlace(id: ID): Promise<void> {
   const purchases = await db.purchases.where('storeId').equals(id).count();
   if (purchases > 0) throw new ValidationError('Há compras registradas neste lugar. Marque como inativo em vez de excluir.');
-  await db.transaction('rw', [db.stores, db.prices, db.fuelPrices], async () => {
+  await db.transaction('rw', [db.stores, db.prices, db.fuelPrices, db.receiptLinks], async () => {
+    await db.receiptLinks.where('placeId').equals(id).delete();
     await db.prices.where('storeId').equals(id).delete();
     await db.fuelPrices.where('stationId').equals(id).delete();
     await db.stores.delete(id);

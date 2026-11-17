@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { AlertTriangle, ChevronRight, Download, Fuel, LayoutList, MapPin, Package, Settings, ShieldCheck, Smartphone, Star, Tags, Wallet } from 'lucide-react';
+import { AlertTriangle, ChevronRight, Download, Fuel, LayoutList, MapPin, Package, ScanLine, Settings, ShieldCheck, Smartphone, Star, Tags, Wallet } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { Button, Card, Logo } from '@/design-system';
 import { useSettings } from '@/app/SettingsContext';
@@ -19,6 +19,7 @@ const GROUPS = [
   {
     title: 'Planejamento',
     links: [
+      { to: '/notas/importar', label: 'Importar nota fiscal', icon: ScanLine },
       { to: '/combustiveis', label: 'Comparar combustíveis', icon: Fuel },
       { to: '/avaliacoes', label: 'Avaliações', icon: Star },
       { to: '/orcamento', label: 'Orçamento', icon: Wallet },

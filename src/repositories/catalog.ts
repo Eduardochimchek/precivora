@@ -114,7 +114,8 @@ export async function setProductArchived(id: ID, archived: boolean): Promise<voi
 
 /** Exclui o produto e tudo o que depende dele (preços, avaliações, itens de lista). Itens de compras passadas são mantidos. */
 export async function deleteProduct(id: ID): Promise<void> {
-  await db.transaction('rw', [db.products, db.prices, db.reviews, db.listItems, db.purchaseItems], async () => {
+  await db.transaction('rw', [db.products, db.prices, db.reviews, db.listItems, db.purchaseItems, db.receiptLinks], async () => {
+    await db.receiptLinks.where('productId').equals(id).delete();
     const used = await db.purchaseItems.where('productId').equals(id).count();
     if (used > 0) throw new ValidationError('Este produto aparece em compras registradas. Arquive em vez de excluir.');
     await db.prices.where('productId').equals(id).delete();
