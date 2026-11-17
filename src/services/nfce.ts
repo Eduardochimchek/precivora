@@ -75,7 +75,7 @@ export function consultationUrl(input: string): { url: string; key?: string; nee
   const key = extractAccessKey(trimmed);
   if (/^https?:\/\//i.test(trimmed)) {
     if (!isFazendaUrl(trimmed) || !key) throw new ReceiptParseError(NOT_RECEIPT_QR);
-    return { url: trimmed, key, needsKeyTyping: false };
+    return { url: trimmed.replace(/^http:/i, 'https:'), key, needsKeyTyping: false };
   }
   if (!key) throw new ReceiptParseError(/^[a-z]+:/i.test(trimmed) ? NOT_RECEIPT_QR : 'Não encontrei uma chave de acesso válida (44 números).');
   const base = UF_CONSULTA[ufOfKey(key)];

@@ -107,7 +107,7 @@ export default function ImportReceiptPage() {
               <Button variant="secondary" className="self-start" icon={<Keyboard className="h-4 w-4" />} disabled={typedKey.replace(/\D/g, '').length !== 44} onClick={() => run(typedKey)}>
                 Consultar pela chave
               </Button>
-              <p className="text-xs text-muted">A chave é copiada para você colar no campo de consulta do site da Fazenda.</p>
+              <p className="text-xs text-muted">Depois da validação de segurança do site, o app preenche a chave e consulta sozinho. Ela também fica copiada, caso precise colar.</p>
             </Card>
           </Section>
           <p className="text-xs text-muted">

@@ -35,7 +35,16 @@ public class NfceBrowserActivity extends Activity {
         "(function(){var t=document.body?document.body.innerText:'';" +
         "return /Vl\\.?\\s*Unit/i.test(t)&&/(C[óo]digo|Qtde)/i.test(t)?document.documentElement.outerHTML:'';})()";
 
+    private static final String FILL_JS =
+        "(function(k){var f=document.querySelector('input[data-chaveacessodfe],input[id$=\"txtChave\"]');" +
+        "var b=document.querySelector('[id$=\"btnBuscar\"]');if(!f||!b||f.offsetParent===null)return '';" +
+        "f.focus();f.value=k.replace(/(\\d{4})(?=\\d)/g,'$1 ');" +
+        "['input','keyup','change'].forEach(function(t){f.dispatchEvent(new Event(t,{bubbles:true}));});" +
+        "b.click();return 'ok';})('%s')";
+
     private final Handler handler = new Handler(Looper.getMainLooper());
+    private String key;
+    private boolean keySent;
     private WebView web;
     private TextView hint;
     private boolean done;
@@ -58,7 +67,8 @@ public class NfceBrowserActivity extends Activity {
         super.onCreate(savedInstanceState);
         resultHtml = null;
         String url = getIntent().getStringExtra(EXTRA_URL);
-        String key = getIntent().getStringExtra(EXTRA_KEY);
+        key = getIntent().getStringExtra(EXTRA_KEY);
+        if (key == null || !key.matches("\\d{44}")) key = null;
         getWindow().setStatusBarColor(Color.parseColor("#0B1220"));
 
         LinearLayout root = new LinearLayout(this);
@@ -80,9 +90,9 @@ public class NfceBrowserActivity extends Activity {
         hint = new TextView(this);
         hint.setTextColor(Color.parseColor("#94A3B8"));
         hint.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
-        hint.setText(key != null && !key.isEmpty()
-            ? "Passe pela verificação e cole a chave (já copiada) no campo da consulta. O app lê a nota quando ela aparecer."
-            : "Se o site pedir, passe pela verificação de segurança. O app lê a nota quando ela aparecer.");
+        hint.setText(key != null
+            ? "Se o site pedir, faça a validação de segurança. Depois o app preenche a chave, consulta e lê a nota sozinho."
+            : "Se o site pedir, faça a validação de segurança. O app lê a nota quando ela aparecer.");
         texts.addView(title);
         texts.addView(hint);
         bar.addView(texts, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
@@ -132,6 +142,14 @@ public class NfceBrowserActivity extends Activity {
 
     private void check() {
         if (done || web == null) return;
+        if (key != null && !keySent) {
+            web.evaluateJavascript(String.format(FILL_JS, key), value -> {
+                if (value != null && value.contains("ok")) {
+                    keySent = true;
+                    hint.setText("Consultando a nota…");
+                }
+            });
+        }
         web.evaluateJavascript(DETECT_JS, value -> {
             if (done || value == null || value.equals("null") || value.equals("\"\"")) return;
             try {
