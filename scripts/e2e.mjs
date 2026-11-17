@@ -147,6 +147,28 @@ try {
     assert(dl.suggestedFilename().startsWith('precivora-backup-'), 'nome do arquivo inesperado');
   });
 
+  await step('celular: "Enviar backup" abre o compartilhamento com o arquivo', async () => {
+    const p2 = await mobile.newPage();
+    p2.setDefaultTimeout(10000);
+    await p2.addInitScript(() => {
+      window.__shared = null;
+      navigator.canShare = (data) => Array.isArray(data?.files) && data.files.length > 0;
+      navigator.share = async (data) => {
+        const f = data.files[0];
+        window.__shared = { name: f.name, type: f.type, text: await f.text() };
+      };
+    });
+    await p2.goto(`${BASE}#/backup`);
+    await p2.getByRole('button', { name: 'Enviar backup' }).click();
+    await p2.waitForFunction(() => window.__shared !== null);
+    const shared = await p2.evaluate(() => window.__shared);
+    assert(shared.name.startsWith('precivora-backup-') && shared.type === 'application/json', 'arquivo compartilhado inesperado');
+    assert(JSON.parse(shared.text).data.products.length >= 8, 'backup compartilhado incompleto');
+    await p2.waitForSelector('text=Backup enviado');
+    await p2.getByRole('heading', { name: 'Trocar de celular' }).waitFor();
+    await p2.close();
+  });
+
   await step('cadastro genérico: item só com nome, tipo novo e lugar dele', async () => {
     await go('/tipos');
     await page.getByRole('button', { name: 'Novo', exact: true }).click();

@@ -1,36 +1,49 @@
 import { useRef, useState } from 'react';
-import { AlertTriangle, CheckCircle2, Download, FileUp, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Download, FileUp, Share2, ShieldCheck, Smartphone } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { Button, Card, Section, Segmented, useFeedback } from '@/design-system';
 import { useSettings } from '@/app/SettingsContext';
 import { analyzeBackup, applyBackup, backupFileName, exportBackup, MAX_BACKUP_BYTES, TABLE_LABEL, type BackupAnalysis, type ImportMode } from '@/services/backup';
 import { logActivity } from '@/repositories/activity';
-import { downloadText } from '@/utils/download';
+import { canShareFiles, downloadText, shareText } from '@/utils/download';
 import { formatDateTime, relativeDays } from '@/utils/date';
 
 export default function BackupPage() {
   const { settings, update } = useSettings();
   const { toast, confirm } = useFeedback();
   const fileRef = useRef<HTMLInputElement>(null);
-  const [exporting, setExporting] = useState(false);
+  const [exporting, setExporting] = useState<'share' | 'save' | null>(null);
+  const [canShare] = useState(canShareFiles);
   const [analysis, setAnalysis] = useState<BackupAnalysis | null>(null);
   const [text, setText] = useState('');
   const [fileName, setFileName] = useState('');
   const [mode, setMode] = useState<ImportMode>('merge');
   const [busy, setBusy] = useState(false);
 
-  async function doExport() {
-    setExporting(true);
+  async function doExport(how: 'share' | 'save') {
+    setExporting(how);
     try {
       const b = await exportBackup();
-      downloadText(JSON.stringify(b), backupFileName());
+      const json = JSON.stringify(b);
+      const name = backupFileName();
+      if (how === 'share') {
+        const result = await shareText(json, name, 'Backup do Precivora');
+        if (result === 'cancelled') return;
+        if (result === 'shared') {
+          await update({ lastBackupAt: b.exportedAt });
+          await logActivity('backup', 'Backup enviado');
+          toast('Backup enviado');
+          return;
+        }
+      }
+      downloadText(json, name);
       await update({ lastBackupAt: b.exportedAt });
       await logActivity('backup', 'Backup exportado');
       toast('Backup salvo nos seus downloads');
     } catch {
       toast('Não foi possível gerar o backup', 'error');
     } finally {
-      setExporting(false);
+      setExporting(null);
     }
   }
 
@@ -102,7 +115,10 @@ export default function BackupPage() {
       <Section title="Exportar" id="exportar">
         <Card className="flex flex-col gap-3 p-4">
           <p className="text-sm text-muted">
-            Gera um arquivo .json com produtos, lugares, preços, avaliações, listas, compras e configurações. Guarde em um lugar seguro (nuvem, e-mail para você mesmo).
+            Gera um arquivo .json com produtos, lugares, preços, avaliações, listas, compras e configurações.{' '}
+            {canShare
+              ? 'Em “Enviar backup”, escolha onde guardar: Google Drive, WhatsApp para você mesmo, e-mail…'
+              : 'Guarde em um lugar seguro (nuvem, e-mail para você mesmo).'}
           </p>
           <p className="text-sm">
             {last ? (
@@ -115,9 +131,35 @@ export default function BackupPage() {
               </span>
             )}
           </p>
-          <Button className="self-start" icon={<Download className="h-4 w-4" />} loading={exporting} onClick={doExport}>
-            Exportar backup
-          </Button>
+          {canShare ? (
+            <div className="flex flex-wrap gap-3">
+              <Button icon={<Share2 className="h-4 w-4" />} loading={exporting === 'share'} disabled={exporting !== null} onClick={() => doExport('share')}>
+                Enviar backup
+              </Button>
+              <Button variant="secondary" icon={<Download className="h-4 w-4" />} loading={exporting === 'save'} disabled={exporting !== null} onClick={() => doExport('save')}>
+                Salvar arquivo
+              </Button>
+            </div>
+          ) : (
+            <Button className="self-start" icon={<Download className="h-4 w-4" />} loading={exporting === 'save'} onClick={() => doExport('save')}>
+              Exportar backup
+            </Button>
+          )}
+        </Card>
+      </Section>
+
+      <Section title="Trocar de celular" id="trocar">
+        <Card className="flex items-start gap-3 p-4">
+          <Smartphone className="mt-0.5 h-5 w-5 shrink-0 text-accent" aria-hidden />
+          <ol className="list-decimal space-y-1.5 pl-4 text-sm">
+            <li>
+              No celular antigo, toque em <strong>{canShare ? 'Enviar backup' : 'Exportar backup'}</strong> e guarde o arquivo onde o celular novo consiga abrir (Google Drive, WhatsApp, e-mail).
+            </li>
+            <li>No celular novo, abra o Precivora e baixe o arquivo.</li>
+            <li>
+              Em <strong>Restaurar</strong>, escolha <strong>Substituir tudo</strong>, toque em <strong>Escolher arquivo</strong> e confirme.
+            </li>
+          </ol>
         </Card>
       </Section>
 
@@ -137,7 +179,7 @@ export default function BackupPage() {
               ? 'Adiciona só o que ainda não existe. Marcas e categorias com o mesmo nome são reaproveitadas; nada é duplicado.'
               : 'Apaga os dados atuais e restaura exatamente o conteúdo do backup.'}
           </p>
-          <input ref={fileRef} type="file" accept="application/json,.json" className="sr-only" id="backup-file" onChange={(e) => onFile(e.target.files?.[0])} />
+          <input ref={fileRef} type="file" accept=".json,application/json,text/plain" className="sr-only" id="backup-file" onChange={(e) => onFile(e.target.files?.[0])} />
           <Button variant="secondary" className="self-start" icon={<FileUp className="h-4 w-4" />} loading={busy && !analysis} onClick={() => fileRef.current?.click()}>
             Escolher arquivo
           </Button>
