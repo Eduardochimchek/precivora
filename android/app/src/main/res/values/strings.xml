@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Precivora</string>
+    <string name="title_activity_main">Precivora</string>
+    <string name="package_name">app.precivora</string>
+    <string name="custom_url_scheme">app.precivora</string>
+</resources>

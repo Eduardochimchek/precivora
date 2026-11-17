@@ -1,4 +1,6 @@
+import { StatusBar, Style } from '@capacitor/status-bar';
 import type { ThemePreference } from '@/types';
+import { isNative } from '@/app/native';
 
 const KEY = 'precivora:theme';
 const COLORS = { light: '#F7F9FC', dark: '#0B1220' };
@@ -12,7 +14,14 @@ export function getThemePreference(): ThemePreference {
   }
 }
 
-export const systemPrefersDark = () => typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches;
+let nativeDark: boolean | null = null;
+
+/** Usado pelo app Android: o sistema informa o modo escuro diretamente. */
+export function setNativeSystemDark(dark: boolean): void {
+  nativeDark = dark;
+}
+
+export const systemPrefersDark = () => nativeDark ?? (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
 export function resolveTheme(pref: ThemePreference): 'light' | 'dark' {
   return pref === 'system' ? (systemPrefersDark() ? 'dark' : 'light') : pref;
@@ -36,6 +45,10 @@ export function applyTheme(pref: ThemePreference, animate = false): 'light' | 'd
   document
     .querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')
     ?.setAttribute('content', theme === 'dark' ? 'black' : 'default');
+  if (isNative) {
+    void StatusBar.setBackgroundColor({ color: COLORS[theme] }).catch(() => undefined);
+    void StatusBar.setStyle({ style: theme === 'dark' ? Style.Dark : Style.Light }).catch(() => undefined);
+  }
   return theme;
 }
 

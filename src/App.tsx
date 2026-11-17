@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from 'react';
 import { HashRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 import { AppShell } from '@/components/AppShell';
 import { UpdatePrompt } from '@/components/UpdatePrompt';
+import { isNative } from '@/app/native';
 import { FeedbackProvider, ListSkeleton, Skeleton } from '@/design-system';
 import { ActionsProvider, useActions } from '@/features/forms/ActionsContext';
 import { SettingsProvider } from '@/app/SettingsContext';
@@ -85,7 +86,7 @@ export default function App({ settings }: { settings: Settings }) {
                   </Route>
                 </Routes>
               </Suspense>
-              <UpdatePrompt />
+              {!isNative && <UpdatePrompt />}
             </ActionsProvider>
           </HashRouter>
         </FeedbackProvider>

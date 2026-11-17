@@ -3,6 +3,8 @@ import { builtinSegmentRows } from '@/db/defaults';
 import { getSettings, saveSettings } from '@/repositories/settings';
 import { applyTheme, getThemePreference } from '@/services/theme';
 import type { Settings } from '@/types';
+import { isNative } from './native';
+import { initNativeTheme } from './nativeTheme';
 
 export interface BootResult {
   settings: Settings;
@@ -23,6 +25,7 @@ export async function boot(): Promise<BootResult> {
     await saveSettings({ theme: local });
     settings.theme = local;
   }
+  if (isNative) await initNativeTheme().catch(() => undefined);
   applyTheme(local);
   void requestPersistentStorage();
   return { settings };

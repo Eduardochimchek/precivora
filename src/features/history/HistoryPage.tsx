@@ -10,7 +10,7 @@ import { FUEL_LABEL } from '@/services/fuel';
 import { UNIT_INFO, packageLabel, packagePrice } from '@/services/units';
 import { formatDate, formatDateTime, formatMonthLong, monthKey } from '@/utils/date';
 import { money, percent } from '@/utils/format';
-import { downloadText } from '@/utils/download';
+import { saveFile } from '@/utils/download';
 import { capitalizeFirst } from '@/utils/text';
 
 const MonthlyChart = lazy(() => import('./MonthlyChart').then((m) => ({ default: m.MonthlyChart })));
@@ -60,11 +60,16 @@ export default function HistoryPage() {
     return [...g.entries()];
   }, [purchases]);
 
-  function exportCsv(kind: 'compras' | 'precos' | 'combustiveis' | 'produtos') {
+  function runExport(kind: 'compras' | 'precos' | 'combustiveis' | 'produtos') {
+    exportCsv(kind).catch(() => toast('Não foi possível salvar o CSV', 'error'));
+  }
+
+  async function exportCsv(kind: 'compras' | 'precos' | 'combustiveis' | 'produtos') {
     const stamp = new Date().toISOString().slice(0, 10);
+    let where = '';
     if (kind === 'compras') {
       const byId = new Map((purchases ?? []).map((p) => [p.id, p]));
-      downloadText(
+      where = await saveFile(
         toCsv(items ?? [], [
           { header: 'Data', value: (i) => formatDate(byId.get(i.purchaseId)?.date ?? '') },
           { header: 'Lugar', value: (i) => storeMap.get(byId.get(i.purchaseId)?.storeId ?? '')?.name },
@@ -77,7 +82,7 @@ export default function HistoryPage() {
         'text/csv',
       );
     } else if (kind === 'precos') {
-      downloadText(
+      where = await saveFile(
         toCsv(prices ?? [], [
           { header: 'Data', value: (r) => formatDate(r.date) },
           { header: 'Produto', value: (r) => productMap.get(r.productId)?.name },
@@ -94,7 +99,7 @@ export default function HistoryPage() {
         'text/csv',
       );
     } else if (kind === 'combustiveis') {
-      downloadText(
+      where = await saveFile(
         toCsv(fuel ?? [], [
           { header: 'Data e hora', value: (r) => formatDateTime(r.date) },
           { header: 'Posto', value: (r) => stationMap.get(r.stationId)?.name },
@@ -107,7 +112,7 @@ export default function HistoryPage() {
         'text/csv',
       );
     } else {
-      downloadText(
+      where = await saveFile(
         toCsv(products ?? [], [
           { header: 'Produto', value: (p) => p.name },
           { header: 'Categoria', value: (p) => categories.get(p.categoryId ?? '')?.name },
@@ -122,7 +127,7 @@ export default function HistoryPage() {
       );
     }
     setExportOpen(false);
-    toast('Arquivo CSV gerado');
+    toast(`CSV salvo em ${where}`);
   }
 
   const maxCat = Math.max(1, ...(data?.cats.map((c) => c.total) ?? [1]));
@@ -253,16 +258,16 @@ export default function HistoryPage() {
 
       <Sheet open={exportOpen} onClose={() => setExportOpen(false)} title="Exportar CSV" description="Abre no Excel ou Planilhas Google. Para guardar tudo, use o backup.">
         <div className="flex flex-col gap-2">
-          <Button variant="secondary" icon={<ShoppingCart className="h-4 w-4" />} onClick={() => exportCsv('compras')} disabled={!items?.length}>
+          <Button variant="secondary" icon={<ShoppingCart className="h-4 w-4" />} onClick={() => runExport('compras')} disabled={!items?.length}>
             Itens das compras
           </Button>
-          <Button variant="secondary" onClick={() => exportCsv('precos')} disabled={!prices?.length}>
+          <Button variant="secondary" onClick={() => runExport('precos')} disabled={!prices?.length}>
             Preços registrados
           </Button>
-          <Button variant="secondary" onClick={() => exportCsv('combustiveis')} disabled={!fuel?.length}>
+          <Button variant="secondary" onClick={() => runExport('combustiveis')} disabled={!fuel?.length}>
             Preços de combustível
           </Button>
-          <Button variant="secondary" onClick={() => exportCsv('produtos')} disabled={!products?.length}>
+          <Button variant="secondary" onClick={() => runExport('produtos')} disabled={!products?.length}>
             Produtos
           </Button>
         </div>

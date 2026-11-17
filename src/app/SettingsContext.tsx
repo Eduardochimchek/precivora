@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { getSettings, saveSettings, DEFAULT_SETTINGS } from '@/repositories/settings';
 import { applyTheme, getThemePreference, setThemePreference } from '@/services/theme';
 import type { Settings } from '@/types';
+import { SYSTEM_THEME_EVENT } from './nativeTheme';
 
 interface SettingsApi {
   settings: Settings;
@@ -23,7 +24,11 @@ export function SettingsProvider({ initial, children }: { initial: Settings; chi
       force((n) => n + 1);
     };
     mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
+    window.addEventListener(SYSTEM_THEME_EVENT, onChange);
+    return () => {
+      mq.removeEventListener('change', onChange);
+      window.removeEventListener(SYSTEM_THEME_EVENT, onChange);
+    };
   }, []);
 
   const update = useCallback(async (patch: Partial<Settings>) => {

@@ -5,7 +5,7 @@ import { Button, Card, Section, Segmented, useFeedback } from '@/design-system';
 import { useSettings } from '@/app/SettingsContext';
 import { analyzeBackup, applyBackup, backupFileName, exportBackup, MAX_BACKUP_BYTES, TABLE_LABEL, type BackupAnalysis, type ImportMode } from '@/services/backup';
 import { logActivity } from '@/repositories/activity';
-import { canShareFiles, downloadText, shareText } from '@/utils/download';
+import { canShareFiles, saveFile, shareText } from '@/utils/download';
 import { formatDateTime, relativeDays } from '@/utils/date';
 
 export default function BackupPage() {
@@ -36,10 +36,10 @@ export default function BackupPage() {
           return;
         }
       }
-      downloadText(json, name);
+      const where = await saveFile(json, name);
       await update({ lastBackupAt: b.exportedAt });
       await logActivity('backup', 'Backup exportado');
-      toast('Backup salvo nos seus downloads');
+      toast(`Backup salvo em ${where}`);
     } catch {
       toast('Não foi possível gerar o backup', 'error');
     } finally {

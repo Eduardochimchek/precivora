@@ -6,8 +6,16 @@ import { cx } from './cx';
 
 const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
 let openCount = 0;
-/** Pilha de painéis abertos: Esc fecha só o do topo. */
-const stack: symbol[] = [];
+/** Pilha de painéis abertos: Esc (ou o voltar do Android) fecha só o do topo. */
+const stack: { token: symbol; close: () => void }[] = [];
+
+/** Fecha o painel do topo, se houver. Usado pelo botão voltar do Android. */
+export function closeTopSheet(): boolean {
+  const top = stack[stack.length - 1];
+  if (!top) return false;
+  top.close();
+  return true;
+}
 
 export interface SheetProps {
   open: boolean;
@@ -42,9 +50,9 @@ export function Sheet({ open, onClose, title, description, children, footer, siz
       (auto ?? el.querySelector<HTMLElement>(FOCUSABLE) ?? el).focus();
     }, 30);
     const token = Symbol('sheet');
-    stack.push(token);
+    stack.push({ token, close: () => onCloseRef.current() });
     const onKey = (e: KeyboardEvent) => {
-      if (stack[stack.length - 1] !== token) return;
+      if (stack[stack.length - 1]?.token !== token) return;
       const el = panel.current;
       if (e.key === 'Escape') {
         e.preventDefault();
@@ -70,7 +78,7 @@ export function Sheet({ open, onClose, title, description, children, footer, siz
     return () => {
       window.clearTimeout(t);
       document.removeEventListener('keydown', onKey);
-      stack.splice(stack.indexOf(token), 1);
+      stack.splice(stack.findIndex((s) => s.token === token), 1);
       openCount--;
       if (openCount === 0) document.body.style.overflow = '';
       previous?.focus?.();

@@ -4,6 +4,10 @@ import App from './App';
 import { boot, hideSplash } from './app/boot';
 import { FatalScreen } from './components/ErrorBoundary';
 import './styles/index.css';
+import { isNative } from './app/native';
+import { setupNativeBridge } from './app/nativeBridge';
+
+if (isNative) setupNativeBridge();
 
 const root = createRoot(document.getElementById('root')!);
 

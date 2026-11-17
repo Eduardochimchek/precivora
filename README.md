@@ -59,6 +59,19 @@ npm run dev          # http://localhost:5173
 
 Para o e2e, o Playwright precisa do Chromium: `npx playwright install chromium`.
 
+### App Android
+
+O mesmo código vira um app Android de verdade com [Capacitor](https://capacitorjs.com) (pasta `android/`). No app, os dados ficam dentro dele (não no armazenamento do Chrome), o backup usa o compartilhamento do Android e salva em `Documentos/Precivora`, o botão voltar fecha painéis e o tema segue o modo escuro do sistema.
+
+Requer JDK 17 e o Android SDK (`ANDROID_HOME` apontando para ele).
+
+```bash
+npm run android:apk      # build web + sincroniza + gera android/app/build/outputs/apk/debug/app-debug.apk
+adb install -r android/app/build/outputs/apk/debug/app-debug.apk   # instala ou atualiza mantendo os dados
+```
+
+`npm run icons:android` regenera ícones e tela de abertura a partir da marca. O APK de depuração é assinado com a chave `~/.android/debug.keystore` da máquina que gerou: uma atualização gerada em outra máquina exige desinstalar (e perder os dados), então faça backup antes. Para a Play Store será preciso uma chave de publicação própria.
+
 ### Publicar
 
 O build é estático (`dist/`) e usa rotas com `#`, então funciona em qualquer hospedagem de arquivos (GitHub Pages, Netlify, Cloudflare Pages, um servidor nginx). O service worker exige HTTPS (ou `localhost`).

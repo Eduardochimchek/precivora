@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { isNative } from './native';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -22,8 +23,9 @@ if (typeof window !== 'undefined') {
 }
 
 export const isStandalone = () =>
-  typeof window !== 'undefined' &&
-  (window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true);
+  isNative ||
+  (typeof window !== 'undefined' &&
+  (window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true));
 
 export const isIOS = () => typeof navigator !== 'undefined' && /iphone|ipad|ipod/i.test(navigator.userAgent);
 
