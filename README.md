@@ -95,6 +95,8 @@ adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 `npm run icons:android` regenera ícones e tela de abertura a partir da marca.
 
 > A chave de assinatura não pode ser perdida: sem ela, uma versão nova não instala por cima e é preciso desinstalar (perdendo os dados que não estiverem em backup). Guarde a chave e as senhas num lugar seguro, fora deste computador.
+>
+> **Onde está a chave:** cópia no Google Drive pessoal do dono do repositório (pasta com os arquivos `precivora-release.jks` e `segredos-github.txt`) e nos segredos do GitHub Actions deste repositório, que assinam o APK mas não deixam baixar a chave. Para gerar e instalar pelo cabo, os dois arquivos vão em `~/.android/precivora/` e as senhas em `android/keystore.properties` (`storeFile`, `storePassword`, `keyAlias`, `keyPassword`).
 
 ### Publicar
 
