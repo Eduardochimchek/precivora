@@ -64,6 +64,16 @@ export default function FuelPage() {
     return out;
   }, [records, stationMap, onlyFav, radius, me, fuel]);
 
+  const unpriced = useMemo(() => {
+    if (!radius || !me) return [];
+    const priced = new Set((records ?? []).filter((r) => r.fuel === fuel).map((r) => r.stationId));
+    return (stations ?? [])
+      .flatMap((st) => (st.active && (!onlyFav || st.favorite) && !priced.has(st.id) && hasCoords(st) && st.geo !== 'none' ? [{ st, d: distanceKm(me, st) }] : []))
+      .filter((x) => x.d <= radius)
+      .sort((a, b) => a.d - b.d);
+  }, [stations, records, onlyFav, radius, me, fuel]);
+  const [showAllUnpriced, setShowAllUnpriced] = useState(false);
+
   const setFilter = (patch: Record<string, string | null>) => {
     const next = new URLSearchParams(params);
     for (const [k, v] of Object.entries(patch)) (v ? next.set(k, v) : next.delete(k));
@@ -208,6 +218,37 @@ export default function FuelPage() {
               </p>
             )}
           </section>
+
+          {unpriced.length > 0 && (
+            <Section title={`Perto, sem preço de ${FUEL_LABEL[fuel].toLowerCase()} (${unpriced.length})`} id="perto-sem-preco">
+              <Card className="divide-y divide-line overflow-hidden">
+                {(showAllUnpriced ? unpriced : unpriced.slice(0, 8)).map(({ st, d }) => (
+                  <div key={st.id} className="flex items-center gap-3 px-4 py-3">
+                    <Link to={`/lugares/${st.id}`} className="flex min-w-0 flex-1 items-center gap-3">
+                      <PlaceMark name={st.name} color={st.color} logo={st.logo} size={34} />
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate font-semibold">{st.name}</div>
+                        <div className="truncate text-xs text-muted">
+                          <span className="font-semibold text-ink">{formatDistance(d)}</span>
+                          {st.flag ? ` · ${st.flag}` : ''}
+                          {st.address ? ` · ${st.address}` : ''}
+                        </div>
+                      </div>
+                    </Link>
+                    <Button size="sm" variant="secondary" icon={<Plus className="h-4 w-4" />} onClick={() => actions.openFuel({ stationId: st.id, fuel })} aria-label={`Anotar preço no ${st.name}`}>
+                      Preço
+                    </Button>
+                  </div>
+                ))}
+              </Card>
+              {unpriced.length > 8 && (
+                <Button variant="ghost" size="sm" className="mt-2" onClick={() => setShowAllUnpriced((v) => !v)}>
+                  {showAllUnpriced ? 'Mostrar menos' : `Mostrar todos (${unpriced.length})`}
+                </Button>
+              )}
+              <p className="mt-2 text-xs text-muted">Postos no raio escolhido que ainda não têm preço deste combustível. Passou por um? Anote o preço da bomba.</p>
+            </Section>
+          )}
 
           {best && worst && ranking.length > 1 && best.record.price < worst.record.price && (
             <Section title="Quanto você economiza" id="economia-tanque">

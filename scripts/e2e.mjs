@@ -310,6 +310,52 @@ try {
     assert(txt.includes('R$ 5,999'), 'preço novo no Posto Trevo não apareceu no ranking');
   });
 
+  await step('perto de mim: posto sem preço aparece para anotar e posto fora do mapa é avisado', async () => {
+    await mobile.grantPermissions(['geolocation']);
+    await mobile.setGeolocation({ latitude: -28.68, longitude: -49.37 });
+    await go('/lugares');
+    await page.getByRole('button', { name: 'Novo', exact: true }).click();
+    await page.getByRole('radio', { name: 'Combustível' }).click();
+    await page.getByLabel('Nome', { exact: true }).fill('Posto Sem Preço');
+    await page.getByRole('button', { name: 'Cadastrar', exact: true }).click();
+    await page.waitForSelector('text=Lugar cadastrado');
+    await page.evaluate(
+      () =>
+        new Promise((res, rej) => {
+          const req = indexedDB.open('precivora');
+          req.onerror = () => rej(String(req.error));
+          req.onsuccess = () => {
+            const tx = req.result.transaction('stores', 'readwrite');
+            const os = tx.objectStore('stores');
+            const all = os.getAll();
+            all.onsuccess = () => {
+              all.result.forEach((s, i) => {
+                if (s.name === 'Posto Trevo') os.put({ ...s, lat: undefined, lng: undefined, geo: undefined });
+                else os.put({ ...s, lat: -28.68 + i * 0.001, lng: -49.37, geo: 'street' });
+              });
+            };
+            tx.oncomplete = () => res(undefined);
+          };
+        }),
+    );
+    await page.reload();
+    await go('/combustiveis?f=gasolina_comum');
+    await page.getByRole('button', { name: 'até 5 km' }).click();
+    const sec = page.locator('section', { has: page.getByRole('heading', { name: /Perto, sem preço de gasolina/ }) });
+    await sec.waitFor();
+    assert(await sec.getByText('Posto Sem Preço').isVisible(), 'posto sem preço não apareceu na lista de perto');
+    const note = await page.getByRole('note').innerText();
+    assert(/1 posto com preço ainda não está no mapa/.test(note), `aviso de posto fora do mapa errado: ${note}`);
+    await shot('08b-perto-sem-preco');
+    await sec.getByRole('button', { name: 'Anotar preço no Posto Sem Preço' }).click();
+    assert((await page.getByLabel('Posto', { exact: true }).innerText()).includes('Posto Sem Preço'), 'formulário não veio com o posto escolhido');
+    await page.getByLabel('Preço por L').fill('6,111');
+    await page.getByRole('button', { name: 'Salvar preço' }).click();
+    await page.waitForSelector('text=R$ 6,111');
+    assert(!(await page.getByRole('heading', { name: /Perto, sem preço de gasolina/ }).isVisible().catch(() => false)), 'posto continuou na lista sem preço depois de anotar');
+    await mobile.clearPermissions();
+  });
+
   await step('endereço inválido não quebra a tela e o erro não trava o app', async () => {
     for (const r of ['/combustiveis?f=lixo', '/mapa?f=lixo&tipo=nada&lugar=xyz', '/produtos/nao-existe', '/lugares?tipo=nada&fav=1', '/comparar?q=%28%28%28']) {
       await go(r);
