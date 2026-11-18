@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { ScanBarcode } from 'lucide-react';
+import { isNative } from '@/app/native';
 import { db } from '@/db/database';
+import { isValidGtin } from '@/services/productLookup';
 import type { ID, PriceRecord } from '@/types';
 import { Button, ChangeBadge, Sheet, TextField, TextareaField, Toggle, useFeedback } from '@/design-system';
 import { useBrands, useMapById, useProducts, useStores } from '@/hooks/useData';
@@ -109,6 +112,37 @@ export function PriceForm({ open, onClose, productId: initialProduct, storeId: i
     }
   }
 
+  const [scanning, setScanning] = useState(false);
+
+  function choose(id: ID) {
+    setProductId(id);
+    setErrors(({ product: _, ...rest }) => rest);
+    setTimeout(() => document.querySelector<HTMLInputElement>('#price-form input[inputmode="decimal"]')?.focus(), 50);
+  }
+
+  async function scanProduct() {
+    const { scanProductBarcode, ScanCancelled } = await import('@/app/nfceNative');
+    setScanning(true);
+    try {
+      const code = (await scanProductBarcode()).replace(/\D/g, '');
+      if (!isValidGtin(code)) {
+        toast('Não consegui ler esse código direito. Tente de novo, com o código reto e bem iluminado.', 'error');
+        return;
+      }
+      const found = await db.products.where('barcode').equals(code).first();
+      if (found) {
+        choose(found.id);
+        toast(`Produto: ${found.name}`);
+      } else {
+        actions.openProduct({ initialBarcode: code, onSaved: choose });
+      }
+    } catch (err) {
+      if (!(err instanceof ScanCancelled)) toast((err as Error).message || 'Não foi possível ler o código', 'error');
+    } finally {
+      setScanning(false);
+    }
+  }
+
   const storeName = (id: ID) => stores.find((s) => s.id === id)?.name ?? 'outro lugar';
 
   return (
@@ -143,6 +177,20 @@ export function PriceForm({ open, onClose, productId: initialProduct, storeId: i
           void submit(false);
         }}
       >
+        {isNative && !priceId && (
+          <button
+            type="button"
+            onClick={() => void scanProduct()}
+            disabled={scanning}
+            className="flex items-center gap-3 rounded-lg border border-dashed border-accent/60 bg-accent/5 px-4 py-3 text-left hover:bg-accent/10 disabled:opacity-60"
+          >
+            <ScanBarcode className="h-6 w-6 shrink-0 text-accent" aria-hidden />
+            <span>
+              <span className="block text-[15px] font-semibold">Ler código de barras</span>
+              <span className="block text-xs text-muted">Escolhe o produto pelo código; se for novo, abre o cadastro já preenchido</span>
+            </span>
+          </button>
+        )}
         <ProductPicker
           products={products}
           brands={brands}

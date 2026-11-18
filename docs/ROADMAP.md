@@ -2,12 +2,12 @@
 
 ## Fase 1 — MVP (concluída)
 
-Produtos, marcas e categorias · mercados · postos · preços · comparador · combustíveis com calculadora flex · avaliações pessoais · sugestões explicadas · listas com comparação da lista inteira · histórico de compras · orçamento · backup e restauração · PWA offline · tema claro/escuro/automático · app Android (Capacitor) · importação de nota fiscal (NFC-e de SC) · cadastro pelo código de barras no app (Open Food Facts) · boas-vindas e apresentação guiada.
+Produtos, marcas e categorias · mercados · postos · preços · comparador · combustíveis com calculadora flex · avaliações pessoais · sugestões explicadas · listas com comparação da lista inteira · histórico de compras · orçamento · backup e restauração · PWA offline · tema claro/escuro/automático · app Android (Capacitor) · importação de nota fiscal (NFC-e de SC) · cadastro e registro de preço pelo código de barras no app (Open Food Facts) · boas-vindas e apresentação guiada.
 
 ## Fase 2 — Inteligência
 
 - **Alertas de preço:** “avise quando o arroz ficar abaixo de R$ X” (local, verificado ao registrar preços; notificações push dependem de suporte do navegador).
-- **Leitor de código de barras no navegador:** no app Android já existe (leitor do Google); na versão web, `BarcodeDetector` onde existir, com alternativa em WebAssembly (ex.: ZXing). Ler o código também ao registrar preço, para achar o produto direto.
+- **Leitor de código de barras no navegador:** no app Android já existe (leitor do Google); na versão web, `BarcodeDetector` onde existir, com alternativa em WebAssembly (ex.: ZXing). No app, o registro de preço já lê o código.
 - **Nota fiscal de outros estados:** a importação já funciona para SC no app Android (a consulta abre numa tela nativa, sem proxy). Falta testar e ajustar outros estados que seguem o layout nacional e decidir o que fazer com estados que exigem captcha interativo.
 - **Backup automático na nuvem:** opção de salvar o backup no Google Drive da própria pessoa, com o banco continuando local.
 - **Tendências:** projeção simples de preço e sazonalidade por produto.

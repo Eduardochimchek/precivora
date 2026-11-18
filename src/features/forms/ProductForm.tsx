@@ -18,6 +18,7 @@ export interface ProductFormProps {
   onClose: () => void;
   productId?: ID;
   initialName?: string;
+  initialBarcode?: string;
   segmentId?: ID;
   onSaved?: (id: ID) => void;
 }
@@ -45,7 +46,7 @@ async function imageFromUrl(url: string): Promise<string | undefined> {
   }
 }
 
-export function ProductForm({ open, onClose, productId, initialName, segmentId: initialSegment, onSaved }: ProductFormProps) {
+export function ProductForm({ open, onClose, productId, initialName, initialBarcode, segmentId: initialSegment, onSaved }: ProductFormProps) {
   const { toast } = useFeedback();
   const brands = useBrands();
   const categories = useCategories();
@@ -69,6 +70,7 @@ export function ProductForm({ open, onClose, productId, initialName, segmentId: 
   const [notice, setNotice] = useState<Notice | null>(null);
   const [photoLoading, setPhotoLoading] = useState(false);
   const session = useRef(0);
+  const [pendingBarcode, setPendingBarcode] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -92,6 +94,7 @@ export function ProductForm({ open, onClose, productId, initialName, segmentId: 
       setImage(undefined);
       setDescription('');
       setNotes('');
+      setPendingBarcode(initialBarcode ?? null);
       return;
     }
     void db.products.get(productId).then(async (p) => {
@@ -110,7 +113,7 @@ export function ProductForm({ open, onClose, productId, initialName, segmentId: 
       setDescription(p.description ?? '');
       setNotes(p.notes ?? '');
     });
-  }, [open, productId, initialName, initialSegment]);
+  }, [open, productId, initialName, initialBarcode, initialSegment]);
 
   const packageSize = parseDecimal(size);
 
@@ -165,6 +168,12 @@ export function ProductForm({ open, onClose, productId, initialName, segmentId: 
       setLooking(false);
     }
   }
+
+  useEffect(() => {
+    if (!pendingBarcode) return;
+    setPendingBarcode(null);
+    void applyBarcode(pendingBarcode, 'top');
+  }, [pendingBarcode]);
 
   async function scanBarcode(at: Notice['at']) {
     const { scanProductBarcode, ScanCancelled } = await import('@/app/nfceNative');

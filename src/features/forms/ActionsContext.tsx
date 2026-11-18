@@ -6,7 +6,7 @@ import { PriceForm } from './PriceForm';
 import { FuelPriceForm } from './FuelPriceForm';
 import { ReviewForm } from './ReviewForm';
 
-interface ProductOpts { productId?: ID; initialName?: string; segmentId?: ID; onSaved?: (id: ID) => void }
+interface ProductOpts { productId?: ID; initialName?: string; initialBarcode?: string; segmentId?: ID; onSaved?: (id: ID) => void }
 interface PlaceOpts { placeId?: ID; segmentId?: ID; mode?: SegmentMode; onSaved?: (id: ID) => void }
 interface PriceOpts { productId?: ID; storeId?: ID; priceId?: ID }
 interface FuelOpts { stationId?: ID; fuel?: FuelType; recordId?: ID }
