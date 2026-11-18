@@ -7,6 +7,8 @@ const MAX_AGE_MS = 5 * 60 * 1000;
 
 export class LocationDenied extends Error {}
 
+const LOCATION_OFF = 'A localização do celular está desligada. Ligue em Configurações > Localização e tente de novo.';
+
 export function lastKnownPosition(): (LatLng & { at: number }) | undefined {
   try {
     const v = JSON.parse(sessionStorage.getItem(KEY) ?? 'null') as (LatLng & { at: number }) | null;
@@ -22,12 +24,15 @@ export async function currentPosition(): Promise<LatLng> {
   if (cached) return cached;
   let pos: { coords: { latitude: number; longitude: number } };
   if (isNative) {
-    const perm = await Geolocation.checkPermissions().catch(() => null);
-    if (perm?.location !== 'granted') {
+    const perm = await Geolocation.checkPermissions().catch((e: Error) => (/not enabled/i.test(e?.message ?? '') ? 'off' : null));
+    if (perm === 'off') throw new LocationDenied(LOCATION_OFF);
+    if (perm?.location !== 'granted' && perm?.coarseLocation !== 'granted') {
       const req = await Geolocation.requestPermissions({ permissions: ['location', 'coarseLocation'] }).catch(() => null);
       if (req?.location !== 'granted' && req?.coarseLocation !== 'granted') throw new LocationDenied('Sem permissão de localização. Libere nas configurações do Android para ver o que está perto.');
     }
-    pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 15_000, maximumAge: 120_000 });
+    pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 15_000, maximumAge: 120_000 }).catch((e: Error) => {
+      throw new Error(/not enabled/i.test(e?.message ?? '') ? LOCATION_OFF : 'Não consegui pegar a localização agora. Tente de novo em instantes.');
+    });
   } else {
     if (!navigator.geolocation) throw new LocationDenied('Este navegador não informa a localização.');
     pos = await new Promise((res, rej) =>

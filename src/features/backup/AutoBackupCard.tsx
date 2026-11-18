@@ -67,9 +67,9 @@ export function AutoBackupCard() {
           </SelectField>
         </div>
 
-        <dl className="grid grid-cols-[auto,1fr] gap-x-4 gap-y-1.5 rounded-lg bg-sunken p-3 text-sm">
+        <dl className="grid grid-cols-[auto,minmax(0,1fr)] gap-x-4 gap-y-1.5 rounded-lg bg-sunken p-3 text-sm">
           <dt className="text-muted">Onde</dt>
-          <dd className="break-words font-semibold">{AUTO_BACKUP_LABEL}</dd>
+          <dd className="font-semibold [overflow-wrap:anywhere]">{AUTO_BACKUP_LABEL}</dd>
           <dt className="text-muted">Último</dt>
           <dd>
             {settings.lastAutoBackupAt ? (
