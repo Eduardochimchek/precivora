@@ -19,7 +19,8 @@
     "icons": "node scripts/generate-icons.mjs",
     "icons:android": "node scripts/generate-android-icons.mjs",
     "android:sync": "npm run build && cap sync android",
-    "android:apk": "npm run android:sync && cd android && ./gradlew assembleDebug"
+    "android:apk": "npm run android:sync && cd android && ./gradlew assembleDebug",
+    "android:release": "npm run android:sync && cd android && ./gradlew assembleRelease"
   },
   "dependencies": {
     "@capacitor-mlkit/barcode-scanning": "6.2.0",

@@ -1,5 +1,22 @@
 apply plugin: 'com.android.application'
 
+def keystoreProps = new Properties()
+def keystorePropsFile = rootProject.file('keystore.properties')
+if (keystorePropsFile.exists()) keystorePropsFile.withInputStream { keystoreProps.load(it) }
+def signing = { String env, String prop -> System.getenv(env) ?: keystoreProps.getProperty(prop) }
+
+def commitCount = { ->
+    try {
+        def out = new ByteArrayOutputStream()
+        exec { commandLine 'git', 'rev-list', '--count', 'HEAD'; standardOutput = out; workingDir rootProject.projectDir }
+        return out.toString().trim().toInteger()
+    } catch (ignored) {
+        return 1
+    }
+}
+def appVersionCode = (System.getenv('VERSION_CODE') ?: commitCount().toString()).toInteger()
+def appVersionName = System.getenv('VERSION_NAME') ?: "1.0.${appVersionCode}"
+
 android {
     namespace "app.precivora"
     compileSdk rootProject.ext.compileSdkVersion
@@ -7,8 +24,8 @@ android {
         applicationId "app.precivora"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode appVersionCode
+        versionName appVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,8 +33,24 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
-    buildTypes {
+    signingConfigs {
         release {
+            def store = signing('ANDROID_KEYSTORE_FILE', 'storeFile')
+            if (store) {
+                storeFile file(store)
+                storePassword signing('ANDROID_KEYSTORE_PASSWORD', 'storePassword')
+                keyAlias signing('ANDROID_KEY_ALIAS', 'keyAlias')
+                keyPassword signing('ANDROID_KEY_PASSWORD', 'keyPassword')
+            }
+        }
+    }
+    buildTypes {
+        debug {
+            applicationIdSuffix '.dev'
+            versionNameSuffix '-dev'
+        }
+        release {
+            if (signing('ANDROID_KEYSTORE_FILE', 'storeFile')) signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

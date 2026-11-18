@@ -76,12 +76,25 @@ O mesmo código vira um app Android de verdade com [Capacitor](https://capacitor
 
 Requer JDK 17 e o Android SDK (`ANDROID_HOME` apontando para ele).
 
+**Baixar o app:** a página [Releases](https://github.com/Eduardochimchek/precivora/releases) tem o APK assinado de cada versão. No celular, baixe o `.apk` e toque nele; atualizar por cima mantém os dados.
+
+**Gerar a versão final (assinada):**
+
+- No GitHub: o fluxo `App Android` (`.github/workflows/android-release.yml`) roda ao enviar uma tag `v*` ou pelo botão *Run workflow* em Actions. Ele testa, compila, assina e publica o APK em Releases. A chave fica nos segredos do repositório (`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`), nunca no código.
+- Na máquina: `npm run android:release` usa `android/keystore.properties` (fora do git) e gera `android/app/build/outputs/apk/release/app-release.apk`.
+
+A versão (`versionCode`) é o número de commits, então cada build novo atualiza o anterior.
+
+**Versão de teste:** `npm run android:apk` gera o app **Precivora Dev** (`app.precivora.dev`), que instala ao lado do app de verdade, com dados separados:
+
 ```bash
-npm run android:apk      # build web + sincroniza + gera android/app/build/outputs/apk/debug/app-debug.apk
-adb install -r android/app/build/outputs/apk/debug/app-debug.apk   # instala ou atualiza mantendo os dados
+npm run android:apk
+adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-`npm run icons:android` regenera ícones e tela de abertura a partir da marca. O APK de depuração é assinado com a chave `~/.android/debug.keystore` da máquina que gerou: uma atualização gerada em outra máquina exige desinstalar (e perder os dados), então faça backup antes. Para a Play Store será preciso uma chave de publicação própria.
+`npm run icons:android` regenera ícones e tela de abertura a partir da marca.
+
+> A chave de assinatura não pode ser perdida: sem ela, uma versão nova não instala por cima e é preciso desinstalar (perdendo os dados que não estiverem em backup). Guarde a chave e as senhas num lugar seguro, fora deste computador.
 
 ### Publicar
 

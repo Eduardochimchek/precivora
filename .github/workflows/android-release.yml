@@ -1,0 +1,83 @@
+name: App Android
+
+# Compila o APK assinado e publica em Releases.
+# Roda ao enviar uma tag v* (ex.: v1.0.20) ou pelo botão "Run workflow" em Actions.
+# Precisa dos segredos ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS e ANDROID_KEY_PASSWORD.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-release
+  cancel-in-progress: false
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    env:
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+    steps:
+      - name: Conferir segredos da assinatura
+        run: |
+          for v in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            if [ -z "${!v}" ]; then
+              echo "::error::Falta o segredo $v (Settings > Secrets and variables > Actions)."
+              exit 1
+            fi
+          done
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - run: npm ci
+
+      - name: Testes
+        run: npm test
+
+      - name: Web e sincronização com o Android
+        run: npm run build && npx cap sync android
+
+      - name: APK assinado
+        working-directory: android
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/precivora.jks"
+          export ANDROID_KEYSTORE_FILE="$RUNNER_TEMP/precivora.jks"
+          COUNT=$(git rev-list --count HEAD)
+          export VERSION_CODE=$COUNT VERSION_NAME="1.0.$COUNT"
+          ./gradlew assembleRelease --no-daemon
+          cp app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/precivora-1.0.$COUNT.apk"
+          echo "VERSION=1.0.$COUNT" >> "$GITHUB_ENV"
+
+      - name: Apagar a chave do runner
+        if: always()
+        run: rm -f "$RUNNER_TEMP/precivora.jks"
+
+      - name: Publicar em Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('v{0}', env.VERSION) }}
+          name: Precivora ${{ env.VERSION }}
+          files: ${{ runner.temp }}/precivora-*.apk
+          body: |
+            APK do app Android do Precivora, assinado.
+
+            Para instalar ou atualizar: abra esta página no celular, baixe o arquivo `.apk` e toque nele (o Android pede para permitir instalar apps do navegador na primeira vez). A atualização mantém os seus dados.
