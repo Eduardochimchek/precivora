@@ -14,12 +14,15 @@ export const DEFAULT_SETTINGS: Settings = {
   savingsGoal: 0,
   onboardingDone: false,
   checklistHidden: false,
+  anpAuto: false,
 };
+
+const OPTIONAL_KEYS = new Set(['lastBackupAt', 'anpCheckedAt', 'anpLatest']);
 
 export async function getSettings(): Promise<Settings> {
   const rows = await db.settings.toArray();
   const s: Record<string, unknown> = { ...DEFAULT_SETTINGS };
-  for (const r of rows) if (r.key in DEFAULT_SETTINGS || r.key === 'lastBackupAt') s[r.key] = r.value;
+  for (const r of rows) if (r.key in DEFAULT_SETTINGS || OPTIONAL_KEYS.has(r.key)) s[r.key] = r.value;
   return s as unknown as Settings;
 }
 

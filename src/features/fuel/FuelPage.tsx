@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { Button, Card, ChangeBadge, Chip, EmptyState, ListSkeleton, PlaceMark, PriceTag, Section, TextField, cx } from '@/design-system';
 import { useActions } from '@/features/forms/ActionsContext';
 import { SegmentTabs } from '@/features/compare/SegmentTabs';
+import { AnpCard } from './AnpCard';
 import { useSettings } from '@/app/SettingsContext';
 import { useFuelPrices, useMapById, useStations } from '@/hooks/useData';
 import { FUEL_LABEL, FUEL_SHORT, flexCompare, fuelUnit, rankStations, tankSavings } from '@/services/fuel';
@@ -33,7 +34,7 @@ export default function FuelPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Combustíveis"
-        subtitle="Preços que você anotou nas bombas, com data e hora."
+        subtitle="Preços da bomba anotados por você ou pela ANP, com data."
         actions={
           <Button size="sm" icon={<Plus className="h-4 w-4" />} onClick={() => actions.openFuel({ fuel })}>
             Preço
@@ -43,6 +44,7 @@ export default function FuelPage() {
       <div className="-mt-2">
         <SegmentTabs active="fuel" />
       </div>
+      <AnpCard />
 
       {!stations || !records ? (
         <ListSkeleton />

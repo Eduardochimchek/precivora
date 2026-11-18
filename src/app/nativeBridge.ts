@@ -1,7 +1,11 @@
 import { App } from '@capacitor/app';
 import { closeTopSheet } from '@/design-system/Sheet';
 
-/** Botão voltar do Android: fecha o painel aberto, volta uma tela ou sai do app na tela inicial. */
+const autoUpdate = () => {
+  void import('./anpNative').then((m) => m.maybeAutoUpdateAnp());
+};
+
+/** Botão voltar do Android (fecha o painel aberto, volta uma tela ou sai na inicial) e atualizações ao abrir o app. */
 export function setupNativeBridge(): void {
   void App.addListener('backButton', ({ canGoBack }) => {
     if (closeTopSheet()) return;
@@ -9,4 +13,6 @@ export function setupNativeBridge(): void {
     if (canGoBack && !atHome) window.history.back();
     else void App.exitApp();
   });
+  void App.addListener('resume', autoUpdate);
+  window.setTimeout(autoUpdate, 4000);
 }

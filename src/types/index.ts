@@ -234,7 +234,13 @@ export interface Settings {
   onboardingDone: boolean;
   /** Esconde a lista de primeiros passos do início. */
   checklistHidden: boolean;
+  /** Busca sozinho os preços do levantamento da ANP (app, no Wi-Fi). */
+  anpAuto: boolean;
   lastBackupAt?: ISODate;
+  /** Última busca no levantamento da ANP. */
+  anpCheckedAt?: ISODate;
+  /** Coleta mais recente encontrada na última busca. */
+  anpLatest?: ISODate;
 }
 
 export interface SettingRow {

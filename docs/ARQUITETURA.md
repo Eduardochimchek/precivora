@@ -83,3 +83,10 @@ QR Code (leitor do Google) ─▶ link da Fazenda ─▶ tela nativa com WebView
 - No app, `scanProductBarcode` (em `app/nfceNative.ts`) usa o mesmo leitor do Google, limitado a EAN-13, EAN-8 e UPC-A.
 - `services/productLookup.ts` confere o dígito verificador e consulta a API v2 do Open Food Facts; quando a resposta indica outro tipo de produto (beleza, pet, geral), repete na base irmã. Só o número do código sai do aparelho.
 - O formulário preenche só o que está vazio (nome, marca, embalagem); a foto é baixada em segundo plano (o servidor de imagens demora) e reduzida como qualquer foto. Código já usado em outro produto oferece abrir ou usar o existente.
+
+## Preços da ANP
+
+- `services/anp.ts` lê os CSVs “últimas 4 semanas” do levantamento de preços da ANP (latin-1, `;`, cabeçalho por nome de coluna) e ignora GLP e linhas inválidas.
+- `repositories/anp.ts` grava pelo CNPJ do posto; postos pesquisados que ainda não existem são cadastrados nas cidades onde a pessoa já tem posto (cidade com o mesmo nome em dois estados só quando um posto conhecido confirma o estado). A mesma coleta (posto, combustível e dia, com observação “ANP …”) não entra duas vezes.
+- `app/anpNative.ts` baixa pelo `CapacitorHttp` (o site da ANP não manda CORS, então não funciona no navegador) e decodifica o base64 como windows-1252. O automático roda ao abrir ou voltar ao app, só com a opção ligada, no Wi-Fi e no máximo a cada 2 dias.
+
