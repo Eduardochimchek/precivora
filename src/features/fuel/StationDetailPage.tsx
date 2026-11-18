@@ -1,11 +1,14 @@
 import { useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Fuel, MapPin, Pencil, Plus, Trash2 } from 'lucide-react';
 import { db } from '@/db/database';
+import { hasCoords } from '@/services/geo';
+import { Map as MapIcon } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { Button, Card, ChangeBadge, Chip, EmptyState, IconButton, ListSkeleton, PlaceMark, Section, useFeedback } from '@/design-system';
 import { useActions } from '@/features/forms/ActionsContext';
+import { FavoriteButton } from '@/features/places/FavoriteButton';
 import { useFuelPrices } from '@/hooks/useData';
 import { FUEL_LABEL, fuelUnit, rankStations } from '@/services/fuel';
 import { byRecent, priceChange } from '@/services/comparison';
@@ -46,9 +49,12 @@ export default function StationDetailPage() {
           </span>
         }
         actions={
-          <IconButton label="Editar posto" onClick={() => actions.openPlace({ placeId: station.id })}>
-            <Pencil className="h-5 w-5" />
-          </IconButton>
+          <>
+            <FavoriteButton place={station} />
+            <IconButton label="Editar posto" onClick={() => actions.openPlace({ placeId: station.id })}>
+              <Pencil className="h-5 w-5" />
+            </IconButton>
+          </>
         }
       />
       <div className="flex items-center gap-3">
@@ -132,6 +138,15 @@ export default function StationDetailPage() {
             <MapPin className="h-4 w-4" aria-hidden />
             Abrir no mapa
           </a>
+        )}
+        {hasCoords(station) && (
+          <Link
+            to={`/mapa?lugar=${station.id}`}
+            className="inline-flex h-9 items-center gap-1.5 rounded-md border border-line px-3 text-sm font-semibold hover:bg-sunken"
+          >
+            <MapIcon className="h-4 w-4" aria-hidden />
+            Ver no mapa
+          </Link>
         )}
         <Button
           variant="ghost"

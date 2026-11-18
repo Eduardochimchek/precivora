@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { MapPin, Plus, Search, Settings2 } from 'lucide-react';
+import { MapPin, Plus, Search, Settings2, Star } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { Button, Chip, EmptyState, ListSkeleton, PlaceMark, SegmentIcon, cx } from '@/design-system';
 import { useActions } from '@/features/forms/ActionsContext';
@@ -19,6 +19,7 @@ export default function PlacesPage() {
   const prices = usePrices();
   const fuelPrices = useFuelPrices();
   const filter = params.get('tipo') ?? '';
+  const onlyFav = params.get('fav') === '1';
   const [query, setQuery] = useState('');
   const [limit, setLimit] = useState(PAGE);
 
@@ -36,8 +37,9 @@ export default function PlacesPage() {
 
   const visible = (places ?? [])
     .filter((p) => !filter || p.segmentId === filter)
+    .filter((p) => !onlyFav || p.favorite)
     .filter((p) => !query.trim() || matches(`${p.name} ${p.flag ?? ''} ${p.neighborhood ?? ''} ${p.city ?? ''} ${p.address ?? ''}`, query))
-    .sort((a, b) => Number(b.active) - Number(a.active) || (info.get(b.id)?.count ?? 0) - (info.get(a.id)?.count ?? 0) || a.name.localeCompare(b.name, 'pt-BR'));
+    .sort((a, b) => Number(b.active) - Number(a.active) || Number(!!b.favorite) - Number(!!a.favorite) || (info.get(b.id)?.count ?? 0) - (info.get(a.id)?.count ?? 0) || a.name.localeCompare(b.name, 'pt-BR'));
   const current = filter ? segments.get(filter) : undefined;
 
   return (
@@ -53,11 +55,15 @@ export default function PlacesPage() {
         }
       />
       <div className="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-none md:mx-0 md:flex-wrap md:px-0" role="tablist" aria-label="Tipo de lugar">
-        <FilterChip active={!filter} onClick={() => setParams({}, { replace: true })}>
+        <FilterChip active={!filter && !onlyFav} onClick={() => setParams({}, { replace: true })}>
           Todos
         </FilterChip>
+        <FilterChip active={onlyFav} onClick={() => setParams(onlyFav ? {} : { fav: '1' }, { replace: true })}>
+          <Star className={cx('h-4 w-4', onlyFav ? 'fill-current' : 'fill-[#F5B301] text-[#F5B301]')} />
+          Favoritos
+        </FilterChip>
         {segmentsList?.map((s) => (
-          <FilterChip key={s.id} active={filter === s.id} onClick={() => setParams({ tipo: s.id }, { replace: true })}>
+          <FilterChip key={s.id} active={filter === s.id} onClick={() => setParams({ tipo: s.id, ...(onlyFav ? { fav: '1' } : {}) }, { replace: true })}>
             <SegmentIcon icon={s.icon} />
             {s.name}
           </FilterChip>
@@ -90,10 +96,10 @@ export default function PlacesPage() {
       ) : !visible.length ? (
         <EmptyState
           icon={current ? <SegmentIcon icon={current.icon} className="h-6 w-6" /> : <MapPin className="h-6 w-6" />}
-          title={query.trim() ? 'Nenhum lugar encontrado' : current ? `Nenhum lugar do tipo ${current.name}` : 'Nenhum lugar cadastrado'}
+          title={onlyFav && !query.trim() ? 'Nenhum favorito ainda' : query.trim() ? 'Nenhum lugar encontrado' : current ? `Nenhum lugar do tipo ${current.name}` : 'Nenhum lugar cadastrado'}
           action={<Button onClick={() => actions.openPlace({ segmentId: filter || undefined })}>Cadastrar lugar</Button>}
         >
-          Cadastre quantos quiser. Só o nome é obrigatório.
+          {onlyFav ? 'Abra um lugar e toque na estrela para ele aparecer aqui e no topo das listas.' : 'Cadastre quantos quiser. Só o nome é obrigatório.'}
         </EmptyState>
       ) : (
         <>
@@ -110,6 +116,7 @@ export default function PlacesPage() {
                   <PlaceMark name={p.name} color={p.color} logo={p.logo} />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
+                      {p.favorite && <Star className="h-3.5 w-3.5 shrink-0 fill-[#F5B301] text-[#F5B301]" aria-label="Favorito" />}
                       <span className="truncate font-semibold">{p.name}</span>
                       {!p.active && <Chip>inativo</Chip>}
                     </div>

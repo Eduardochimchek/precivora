@@ -157,7 +157,7 @@ export function DashboardPage() {
                 { label: 'Cadastrar um lugar', done: stores!.length + stations!.length > 0, onClick: () => actions.openPlace({ mode: 'items' }) },
                 { label: 'Registrar um preço', done: prices!.length + fuelPrices!.length > 0, onClick: () => actions.openPrice() },
                 { label: 'Montar uma lista de compras', done: (listCount ?? 0) > 0, to: '/listas' },
-                { label: 'Fazer o primeiro backup', done: !!settings.lastBackupAt, to: '/backup' },
+                { label: 'Fazer o primeiro backup', done: !!(settings.lastBackupAt || settings.lastAutoBackupAt), to: '/backup' },
               ]}
               onHide={() => update({ checklistHidden: true })}
             />

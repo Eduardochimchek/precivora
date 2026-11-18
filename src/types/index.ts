@@ -71,6 +71,8 @@ export interface Segment extends Timestamps {
 }
 
 /** Lugar onde se compra ou abastece (mercado, farmácia, posto...). */
+export type GeoPrecision = 'exact' | 'street' | 'area' | 'none';
+
 export interface Place extends Timestamps {
   id: ID;
   segmentId: ID;
@@ -84,6 +86,13 @@ export interface Place extends Timestamps {
   cnpj?: string;
   /** Logo ou foto pequena (data URL). */
   logo?: string;
+  favorite?: boolean;
+  /** Coordenadas do endereço (busca automática no OpenStreetMap). */
+  lat?: number;
+  lng?: number;
+  /** Precisão da localização: número da rua, só a rua, só o bairro/cidade, ou não encontrado. */
+  geo?: GeoPrecision;
+  geoAt?: ISODate;
   notes?: string;
   color: string;
   active: boolean;
@@ -236,7 +245,13 @@ export interface Settings {
   checklistHidden: boolean;
   /** Busca sozinho os preços do levantamento da ANP (app, no Wi-Fi). */
   anpAuto: boolean;
+  /** Cópia automática em Documentos/Precivora/Automatico (app). */
+  autoBackup: boolean;
+  autoBackupDays: number;
+  autoBackupKeep: number;
   lastBackupAt?: ISODate;
+  lastAutoBackupAt?: ISODate;
+  lastAutoBackupBytes?: number;
   /** Última busca no levantamento da ANP. */
   anpCheckedAt?: ISODate;
   /** Coleta mais recente encontrada na última busca. */

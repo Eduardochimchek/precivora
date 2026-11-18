@@ -1,10 +1,10 @@
 import { useId, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { ChevronDown, Plus, Search } from 'lucide-react';
+import { ChevronDown, Plus, Search, Star } from 'lucide-react';
 import { db } from '@/db/database';
 import type { ID, Place, SegmentMode } from '@/types';
 import { Button, PlaceMark, Sheet, cx } from '@/design-system';
-import { useSegments, useStores } from '@/hooks/useData';
+import { usePlaces, useSegments } from '@/hooks/useData';
 import { matches } from '@/utils/text';
 
 const MAX_SHOWN = 60;
@@ -41,7 +41,7 @@ export function PlacePicker({ value, onChange, mode, label = 'Lugar', error, kee
   const segments = useSegments() ?? [];
   const segIds = useMemo(() => new Set(segments.filter((s) => s.mode === mode).map((s) => s.id)), [segments, mode]);
   const segName = useMemo(() => new Map(segments.map((s) => [s.id, s.name])), [segments]);
-  const all = useStores() ?? [];
+  const all = usePlaces() ?? [];
   const places = all.filter((p) => segIds.has(p.segmentId) && (p.active || p.id === keepId || p.id === value));
   const recent = useRecentPlaceIds(mode);
   const selected = all.find((p) => p.id === value);
@@ -49,19 +49,20 @@ export function PlacePicker({ value, onChange, mode, label = 'Lugar', error, kee
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
 
-  const { recentList, rest, total } = useMemo(() => {
+  const { favList, recentList, rest, total } = useMemo(() => {
     const q = query.trim();
     const found = q ? places.filter((p) => matches(`${p.name} ${p.flag ?? ''} ${p.neighborhood ?? ''} ${p.city ?? ''} ${p.address ?? ''}`, q)) : places;
     const rank = new Map(recent.map((id, i) => [id, i]));
+    const favList = q ? [] : found.filter((p) => p.favorite).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
     const recentList = q
       ? []
       : found
-          .filter((p) => rank.has(p.id))
+          .filter((p) => rank.has(p.id) && !p.favorite)
           .sort((a, b) => rank.get(a.id)! - rank.get(b.id)!)
           .slice(0, 8);
-    const shownRecent = new Set(recentList.map((p) => p.id));
-    const rest = found.filter((p) => !shownRecent.has(p.id)).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
-    return { recentList, rest, total: found.length };
+    const shown = new Set([...favList, ...recentList].map((p) => p.id));
+    const rest = found.filter((p) => !shown.has(p.id)).sort((a, b) => Number(!!b.favorite) - Number(!!a.favorite) || a.name.localeCompare(b.name, 'pt-BR'));
+    return { favList, recentList, rest, total: found.length };
   }, [places, recent, query]);
 
   const choose = (id: ID) => {
@@ -80,7 +81,10 @@ export function PlacePicker({ value, onChange, mode, label = 'Lugar', error, kee
       >
         <PlaceMark name={p.name} color={p.color} logo={p.logo} size={36} />
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[15px] font-semibold">{p.name}</span>
+          <span className="flex items-center gap-1 truncate text-[15px] font-semibold">
+            {p.favorite && <Star className="h-3.5 w-3.5 shrink-0 fill-[#F5B301] text-[#F5B301]" aria-label="Favorito" />}
+            <span className="truncate">{p.name}</span>
+          </span>
           <span className="block truncate text-xs text-muted">{[segIds.size > 1 ? segName.get(p.segmentId) : undefined, placeSubtitle(p)].filter(Boolean).join(' · ') || p.address}</span>
         </span>
       </button>
@@ -145,6 +149,12 @@ export function PlacePicker({ value, onChange, mode, label = 'Lugar', error, kee
               className="h-12 w-full rounded-md border border-line bg-surface pl-10 pr-3 text-[15px] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             />
           </div>
+          {favList.length > 0 && (
+            <section>
+              <h3 className="mb-1 px-2 text-xs font-semibold uppercase tracking-wide text-muted">Favoritos</h3>
+              <ul>{favList.map(row)}</ul>
+            </section>
+          )}
           {recentList.length > 0 && (
             <section>
               <h3 className="mb-1 px-2 text-xs font-semibold uppercase tracking-wide text-muted">Usados por último</h3>
@@ -153,7 +163,7 @@ export function PlacePicker({ value, onChange, mode, label = 'Lugar', error, kee
           )}
           {rest.length > 0 && (
             <section>
-              {recentList.length > 0 && <h3 className="mb-1 px-2 text-xs font-semibold uppercase tracking-wide text-muted">Todos</h3>}
+              {(recentList.length > 0 || favList.length > 0) && <h3 className="mb-1 px-2 text-xs font-semibold uppercase tracking-wide text-muted">Todos</h3>}
               <ul>{rest.slice(0, MAX_SHOWN).map(row)}</ul>
               {rest.length > MAX_SHOWN && (
                 <p className="px-2 py-2 text-xs text-muted">

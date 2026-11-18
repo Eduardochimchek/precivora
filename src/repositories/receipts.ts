@@ -6,6 +6,7 @@ import { receiptLinkSchema } from '@/services/schemas';
 import { newId } from '@/utils/id';
 import { nowISO } from '@/utils/date';
 import { searchKey } from '@/utils/text';
+import { bestMatch, STRONG_MATCH, WEAK_MATCH, type MatchCandidate } from '@/services/productMatch';
 import { validate, ValidationError } from './errors';
 import { savePlace } from './places';
 import { saveProduct } from './catalog';
@@ -23,8 +24,10 @@ export interface DraftItem {
   linkKey: string;
   /** Sugestão para lugar de produtos (vínculo, nome igual ou produto novo). */
   decision: ItemDecision;
-  /** Como o produto foi reconhecido: vínculo salvo neste lugar ou nome igual a um produto existente. */
-  matchedBy?: 'link' | 'name';
+  /** Como o produto foi reconhecido: vínculo salvo neste lugar, nome igual ou descrição parecida. */
+  matchedBy?: 'link' | 'name' | 'similar';
+  /** Produto parecido sugerido quando a semelhança não basta para ligar sozinho. */
+  similar?: { productId: ID; score: number };
   fuel?: FuelType;
 }
 
@@ -51,6 +54,21 @@ export async function isReceiptImported(key?: string): Promise<boolean> {
   return (await db.fuelPrices.filter((f) => f.receiptKey === key).count()) > 0;
 }
 
+/** Textos de cada produto ativo para a busca por semelhança: nome com marca e descrições de notas já ligadas. */
+async function matchCandidates(): Promise<MatchCandidate[]> {
+  const [products, brands, links] = await Promise.all([db.products.toArray(), db.brands.toArray(), db.receiptLinks.toArray()]);
+  const brandName = new Map(brands.map((b) => [b.id, b.name]));
+  const byProduct = new Map<ID, string[]>();
+  for (const l of links) byProduct.set(l.productId, [...(byProduct.get(l.productId) ?? []), l.description]);
+  return products
+    .filter((p) => !p.archived)
+    .map((p) => {
+      const sized = p.unit === 'kg' || p.unit === 'g' || p.unit === 'L' || p.unit === 'ml' ? ` ${p.packageSize}${p.unit}` : '';
+      const brand = p.brandId ? brandName.get(p.brandId) : undefined;
+      return { id: p.id, texts: [`${p.name} ${brand ?? ''}${p.name.match(/\d\s*(kg|g|l|ml)\b/i) ? '' : sized}`, ...(byProduct.get(p.id) ?? [])] };
+    });
+}
+
 /** Monta a proposta de importação: reconhece o lugar pelo CNPJ e os produtos pelos vínculos já feitos. */
 export async function draftFromReceipt(receipt: Receipt): Promise<ReceiptDraft> {
   const place = receipt.store.cnpj ? await db.stores.where('cnpj').equals(receipt.store.cnpj).first() : undefined;
@@ -59,6 +77,7 @@ export async function draftFromReceipt(receipt: Receipt): Promise<ReceiptDraft> 
   const segment = place ? await db.segments.get(place.segmentId) : undefined;
   const fuelPlace = segment ? segment.mode === 'fuel' : allFuel;
 
+  const candidates = await matchCandidates();
   const items: DraftItem[] = [];
   for (const [idx, item] of receipt.items.entries()) {
     const linkKey = linkKeyOf(item);
@@ -79,7 +98,15 @@ export async function draftFromReceipt(receipt: Receipt): Promise<ReceiptDraft> 
         matchedBy = 'name';
       }
     }
-    items.push({ item, linkKey, matchedBy, fuel, decision: decision ?? { action: 'new', name: prettyItemName(item.description), ...guessPackage(item) } });
+    let similar: DraftItem['similar'];
+    if (!decision && !fuel) {
+      const m = bestMatch(item.description, candidates);
+      if (m && m.score >= STRONG_MATCH) {
+        decision = { action: 'link', productId: m.id };
+        matchedBy = 'similar';
+      } else if (m && m.score >= WEAK_MATCH) similar = { productId: m.id, score: m.score };
+    }
+    items.push({ item, linkKey, matchedBy, similar, fuel, decision: decision ?? { action: 'new', name: prettyItemName(item.description), ...guessPackage(item) } });
   }
 
   return {

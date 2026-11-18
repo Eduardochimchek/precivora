@@ -19,6 +19,7 @@ boot()
       </StrictMode>,
     );
     requestAnimationFrame(() => hideSplash());
+    if (!isNative && !navigator.webdriver) window.setTimeout(() => void import('./app/geocodeRunner').then((m) => m.runGeocoding()), 6000);
   })
   .catch((err: Error) => {
     console.error('[Precivora] falha ao iniciar', err);

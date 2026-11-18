@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Calculator, Fuel, MapPin, Plus } from 'lucide-react';
+import { Calculator, Crosshair, Fuel, Map as MapIcon, MapPin, Plus, Star } from 'lucide-react';
+import { currentPosition, lastKnownPosition } from '@/app/location';
+import { distanceKm, formatDistance, hasCoords, type LatLng } from '@/services/geo';
 import { PageHeader } from '@/components/PageHeader';
-import { Button, Card, ChangeBadge, Chip, EmptyState, ListSkeleton, PlaceMark, PriceTag, Section, TextField, cx } from '@/design-system';
+import { Button, Card, ChangeBadge, Chip, EmptyState, ListSkeleton, PlaceMark, PriceTag, Section, TextField, cx, useFeedback } from '@/design-system';
 import { useActions } from '@/features/forms/ActionsContext';
 import { SegmentTabs } from '@/features/compare/SegmentTabs';
 import { AnpCard } from './AnpCard';
@@ -25,7 +27,50 @@ export default function FuelPage() {
 
   const available = useMemo(() => FUEL_TYPES.filter((f) => records?.some((r) => r.fuel === f)), [records]);
   const fuel = (params.get('f') as FuelType) || available[0] || 'gasolina_comum';
-  const activeRecords = useMemo(() => (records ?? []).filter((r) => stationMap.get(r.stationId)?.active), [records, stationMap]);
+  const onlyFav = params.get('fav') === '1';
+  const radius = Number(params.get('perto')) || 0;
+  const [me, setMe] = useState<LatLng | undefined>(lastKnownPosition());
+  const [locating, setLocating] = useState(false);
+  const { toast } = useFeedback();
+  const distOf = (id: string) => {
+    const st = stationMap.get(id);
+    return me && st && hasCoords(st) && st.geo !== 'none' ? distanceKm(me, st) : undefined;
+  };
+  const activeRecords = useMemo(
+    () =>
+      (records ?? []).filter((r) => {
+        const st = stationMap.get(r.stationId);
+        if (!st?.active || (onlyFav && !st.favorite)) return false;
+        if (radius && me) {
+          const d = hasCoords(st) && st.geo !== 'none' ? distanceKm(me, st) : undefined;
+          return d !== undefined && d <= radius;
+        }
+        return true;
+      }),
+    [records, stationMap, onlyFav, radius, me],
+  );
+
+  const setFilter = (patch: Record<string, string | null>) => {
+    const next = new URLSearchParams(params);
+    for (const [k, v] of Object.entries(patch)) (v ? next.set(k, v) : next.delete(k));
+    setParams(next, { replace: true });
+  };
+
+  async function near(km: number) {
+    if (!km) return setFilter({ perto: null });
+    if (!me) {
+      setLocating(true);
+      try {
+        setMe(await currentPosition());
+      } catch (err) {
+        toast((err as Error).message || 'Não consegui pegar a localização.', 'error');
+        return;
+      } finally {
+        setLocating(false);
+      }
+    }
+    setFilter({ perto: String(km) });
+  }
   const ranking = useMemo(() => rankStations(activeRecords, fuel, FUEL_STALE_DAYS), [activeRecords, fuel]);
   const best = ranking[0];
   const worst = ranking[ranking.length - 1];
@@ -36,9 +81,14 @@ export default function FuelPage() {
         title="Combustíveis"
         subtitle="Preços da bomba anotados por você ou pela ANP, com data."
         actions={
-          <Button size="sm" icon={<Plus className="h-4 w-4" />} onClick={() => actions.openFuel({ fuel })}>
-            Preço
-          </Button>
+          <>
+            <Link to="/mapa?tipo=seg-combustivel" aria-label="Ver postos no mapa" title="Ver postos no mapa" className="inline-flex h-11 w-11 items-center justify-center rounded-full hover:bg-sunken">
+              <MapIcon className="h-5 w-5" />
+            </Link>
+            <Button size="sm" icon={<Plus className="h-4 w-4" />} onClick={() => actions.openFuel({ fuel })}>
+              Preço
+            </Button>
+          </>
         }
       />
       <div className="-mt-2">
@@ -76,6 +126,16 @@ export default function FuelPage() {
             ))}
           </div>
 
+          <div className="-mx-4 -mt-3 flex items-center gap-2 overflow-x-auto px-4 scrollbar-none md:mx-0 md:px-0" aria-label="Filtrar postos">
+            <FilterPill active={onlyFav} onClick={() => setFilter({ fav: onlyFav ? null : '1' })}>
+              <Star className={cx('h-3.5 w-3.5', onlyFav ? 'fill-current' : 'fill-[#F5B301] text-[#F5B301]')} /> Favoritos
+            </FilterPill>
+            {[0, 2, 5, 10, 20].map((km) => (
+              <FilterPill key={km} active={radius === km} onClick={() => void near(km)} disabled={locating}>
+                {km === 0 ? <>Qualquer distância</> : <>{km === 2 && <Crosshair className="h-3.5 w-3.5" />}até {km} km</>}
+              </FilterPill>
+            ))}
+          </div>
           <section aria-labelledby="ranking" role="tabpanel">
             <h2 id="ranking" className="sr-only">
               Ranking de {FUEL_LABEL[fuel]}
@@ -90,6 +150,7 @@ export default function FuelPage() {
                       <div className="min-w-0 flex-1">
                         <div className="truncate font-semibold">{st.name}</div>
                         <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted">
+                          {distOf(q.stationId) !== undefined && <span className="font-semibold text-ink">{formatDistance(distOf(q.stationId)!)} ·</span>}
                           {st.flag && <span>{st.flag} ·</span>}
                           <time dateTime={q.record.date} title={formatDateTime(q.record.date)}>
                             {relativeDays(q.record.date)}
@@ -114,7 +175,13 @@ export default function FuelPage() {
             ) : (
               <EmptyState
                 icon={<Fuel className="h-6 w-6" />}
-                title={`Nenhum preço de ${FUEL_LABEL[fuel].toLowerCase()}`}
+                title={
+                  radius && me
+                    ? `Nenhum posto com preço de ${FUEL_LABEL[fuel].toLowerCase()} até ${radius} km`
+                    : onlyFav
+                      ? `Nenhum favorito com preço de ${FUEL_LABEL[fuel].toLowerCase()}`
+                      : `Nenhum preço de ${FUEL_LABEL[fuel].toLowerCase()}`
+                }
                 action={<Button onClick={() => actions.openFuel({ fuel })}>Registrar preço</Button>}
               />
             )}
@@ -224,5 +291,22 @@ function FlexCalculator({ records, ratio }: { records: Parameters<typeof rankSta
         {(bestE || bestG) && <p className="mt-2 text-xs text-muted">Preenchido com o menor preço registrado de cada um.</p>}
       </Card>
     </Section>
+  );
+}
+
+function FilterPill({ active, onClick, children, disabled }: { active: boolean; onClick: () => void; children: React.ReactNode; disabled?: boolean }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      disabled={disabled}
+      onClick={onClick}
+      className={cx(
+        'flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-colors disabled:opacity-50',
+        active ? 'border-transparent bg-navy text-[#F1F5F9] dark:bg-lime dark:text-navy' : 'border-line bg-surface text-muted hover:text-ink',
+      )}
+    >
+      {children}
+    </button>
   );
 }

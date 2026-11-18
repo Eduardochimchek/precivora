@@ -6,6 +6,7 @@ import { useSettings } from '@/app/SettingsContext';
 import { analyzeBackup, applyBackup, backupFileName, exportBackup, MAX_BACKUP_BYTES, TABLE_LABEL, type BackupAnalysis, type ImportMode } from '@/services/backup';
 import { logActivity } from '@/repositories/activity';
 import { canShareFiles, saveFile, shareText } from '@/utils/download';
+import { AutoBackupCard } from './AutoBackupCard';
 import { formatDateTime, relativeDays } from '@/utils/date';
 
 export default function BackupPage() {
@@ -148,6 +149,8 @@ export default function BackupPage() {
           )}
         </Card>
       </Section>
+
+      <AutoBackupCard />
 
       <Section title="Trocar de celular" id="trocar">
         <Card className="flex items-start gap-3 p-4">

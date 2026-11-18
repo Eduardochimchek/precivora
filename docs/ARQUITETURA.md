@@ -90,3 +90,19 @@ QR Code (leitor do Google) ─▶ link da Fazenda ─▶ tela nativa com WebView
 - `repositories/anp.ts` grava pelo CNPJ do posto; postos pesquisados que ainda não existem são cadastrados nas cidades onde a pessoa já tem posto (cidade com o mesmo nome em dois estados só quando um posto conhecido confirma o estado). A mesma coleta (posto, combustível e dia, com observação “ANP …”) não entra duas vezes.
 - `app/anpNative.ts` baixa pelo `CapacitorHttp` (o site da ANP não manda CORS, então não funciona no navegador) e decodifica o base64 como windows-1252. O automático roda ao abrir ou voltar ao app, só com a opção ligada, no Wi-Fi e no máximo a cada 2 dias.
 
+## Produto parecido entre notas
+
+- `services/productMatch.ts`: expande abreviações comuns de NFC-e, separa o tamanho da embalagem (5 kg ≠ 1 kg é sempre outro produto) e compara palavras (aceitando prefixo, “feij” ~ “feijão”). Compara com nome + marca + tamanho de cada produto e com as descrições de notas já ligadas a ele em qualquer lugar.
+- Na conferência: semelhança alta liga sozinho com o selo “Parecido”; média só sugere (“Talvez seja”).
+
+## Backup automático
+
+- `app/autoBackup.ts` grava o backup completo em `Documentos/Precivora/Automatico` (Capacitor Filesystem) ao abrir/voltar ao app quando passou o intervalo; apaga as cópias além do limite. Ajustes: `autoBackup`, `autoBackupDays`, `autoBackupKeep`, `lastAutoBackupAt`, `lastAutoBackupBytes`.
+
+## Localização e mapa
+
+- `services/geo.ts`: distância (haversine), rua/número a partir do endereço livre, pedidos ao Nominatim (rua com número; se falhar, bairro) e leitura da resposta (recusa cidade diferente).
+- `app/geocodeRunner.ts`: localiza em segundo plano os lugares sem coordenadas, um pedido a cada 1,1 s (regra do Nominatim), com User-Agent próprio no app. Precisão guardada em `geo` (`exact`, `street`, `area`, `none`); “não encontrado” tenta de novo depois de 30 dias; mudar o endereço apaga a localização.
+- `app/location.ts`: posição do aparelho (plugin de geolocalização no app; `navigator.geolocation` no navegador), só sob ação da pessoa e guardada por 5 minutos na sessão.
+- `features/map/MapPage.tsx`: Leaflet com os tiles do OpenStreetMap (no tema escuro, um filtro CSS escurece o mapa).
+

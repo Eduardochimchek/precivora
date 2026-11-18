@@ -15,9 +15,12 @@ export const DEFAULT_SETTINGS: Settings = {
   onboardingDone: false,
   checklistHidden: false,
   anpAuto: false,
+  autoBackup: false,
+  autoBackupDays: 7,
+  autoBackupKeep: 4,
 };
 
-const OPTIONAL_KEYS = new Set(['lastBackupAt', 'anpCheckedAt', 'anpLatest']);
+const OPTIONAL_KEYS = new Set(['lastBackupAt', 'anpCheckedAt', 'anpLatest', 'lastAutoBackupAt', 'lastAutoBackupBytes']);
 
 export async function getSettings(): Promise<Settings> {
   const rows = await db.settings.toArray();

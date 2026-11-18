@@ -2,7 +2,9 @@ import { App } from '@capacitor/app';
 import { closeTopSheet } from '@/design-system/Sheet';
 
 const autoUpdate = () => {
+  void import('./autoBackup').then((m) => m.maybeAutoBackup());
   void import('./anpNative').then((m) => m.maybeAutoUpdateAnp());
+  void import('./geocodeRunner').then((m) => m.runGeocoding());
 };
 
 /** Botão voltar do Android (fecha o painel aberto, volta uma tela ou sai na inicial) e atualizações ao abrir o app. */

@@ -296,6 +296,20 @@ try {
     await shot('08-combustiveis');
   });
 
+  await step('combustível: escolhe o posto pela busca e salva o preço', async () => {
+    await go('/combustiveis?f=gasolina_comum');
+    await page.getByRole('button', { name: 'Preço', exact: true }).click();
+    await page.getByLabel('Posto', { exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Escolher posto' });
+    await dialog.getByLabel('Buscar lugar').fill('trevo');
+    await dialog.getByRole('button', { name: /Posto Trevo/ }).click();
+    await page.getByLabel('Preço por L').fill('5,999');
+    await page.getByRole('button', { name: 'Salvar preço' }).click();
+    await page.waitForSelector('text=Posto Trevo');
+    const txt = (await page.locator('main').innerText()).replace(/\u00a0/g, ' ');
+    assert(txt.includes('R$ 5,999'), 'preço novo no Posto Trevo não apareceu no ranking');
+  });
+
   await step('lista: compara mercados e recomenda', async () => {
     await go('/listas');
     await page.getByRole('link', { name: /Compra do mês/ }).click();

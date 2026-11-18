@@ -3,6 +3,8 @@ import { SEG_COMBUSTIVEL, SEG_MERCADO } from '@/db/defaults';
 import { consultationUrl, extractAccessKey, fuelFromDescription, guessPackage, parseBrNumber, parseReceiptHtml, prettyItemName, ReceiptParseError } from '@/services/nfce';
 import { draftFromReceipt, fuelDecisions, importReceipt, type ItemDecision } from '@/repositories/receipts';
 import { savePlace } from '@/repositories/places';
+import { saveProduct } from '@/repositories/catalog';
+import type { Receipt } from '@/services/nfce';
 import { ValidationError } from '@/repositories/errors';
 import { FUEL_RECEIPT, MARKET_RECEIPT, PLAIN_RECEIPT, SECURITY_PAGE } from './fixtures/nfce';
 import { resetDb } from './db-helpers';
@@ -73,6 +75,24 @@ describe('importação da nota', () => {
   beforeEach(resetDb);
 
   const decisionsOf = (draft: Awaited<ReturnType<typeof draftFromReceipt>>): ItemDecision[] => draft.items.map((i) => i.decision);
+
+  it('liga por semelhança o mesmo produto escrito de outro jeito e só sugere quando há dúvida', async () => {
+    const arroz = await saveProduct({ name: 'Arroz Tio João', unit: 'kg', packageSize: 5, segmentId: SEG_MERCADO });
+    await saveProduct({ name: 'Café Pilão', unit: 'g', packageSize: 500, segmentId: SEG_MERCADO });
+    const item = (description: string) => ({ description, quantity: 1, unit: 'UN', unitPrice: 10, total: 10 });
+    const receipt: Receipt = {
+      accessKey: '42261199999999000199650010000000011000000019',
+      store: { name: 'Outro Mercado', cnpj: '99999999000199' },
+      items: [item('ARR TIO JOAO T1 5KG'), item('ARROZ TIO JOAO T1 1KG'), item('ARROZ TIO 5KG'), item('PILHA AA')],
+    };
+    const draft = await draftFromReceipt(receipt);
+    expect(draft.items[0]).toMatchObject({ matchedBy: 'similar', decision: { action: 'link', productId: arroz } });
+    expect(draft.items[1].decision.action).toBe('new');
+    expect(draft.items[1].similar).toBeUndefined();
+    expect(draft.items[2].decision.action === 'new' ? draft.items[2].similar?.productId : draft.items[2].decision.action === 'link' && draft.items[2].decision.productId).toBe(arroz);
+    expect(draft.items[3]).toMatchObject({ decision: { action: 'new' } });
+    expect(draft.items[3].similar).toBeUndefined();
+  });
 
   it('cria lugar com CNPJ, produtos, vínculos e a compra; na segunda nota reconhece tudo', async () => {
     const receipt = parseReceiptHtml(MARKET_RECEIPT);

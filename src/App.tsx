@@ -16,6 +16,7 @@ const ImportReceiptPage = lazy(() => import('@/features/receipts/ImportReceiptPa
 const ProductDetailPage = lazy(() => import('@/features/products/ProductDetailPage'));
 const ProductsPage = lazy(() => import('@/features/products/ProductsPage'));
 const FuelPage = lazy(() => import('@/features/fuel/FuelPage'));
+const MapPage = lazy(() => import('@/features/map/MapPage'));
 const PlacesPage = lazy(() => import('@/features/places/PlacesPage'));
 const PlaceDetailPage = lazy(() => import('@/features/places/PlaceDetailPage'));
 const SegmentsPage = lazy(() => import('@/features/places/SegmentsPage'));
@@ -67,6 +68,7 @@ export default function App({ settings }: { settings: Settings }) {
                     <Route path="produtos/:id" element={<ProductDetailPage />} />
                     <Route path="precos/novo" element={<QuickPrice />} />
                     <Route path="combustiveis" element={<FuelPage />} />
+                    <Route path="mapa" element={<MapPage />} />
                     <Route path="lugares" element={<PlacesPage />} />
                     <Route path="lugares/:id" element={<PlaceDetailPage />} />
                     <Route path="tipos" element={<SegmentsPage />} />

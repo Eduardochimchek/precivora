@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { AlertTriangle, ChevronRight, Download, Fuel, LayoutList, MapPin, Package, ScanLine, Settings, ShieldCheck, Smartphone, Star, Tags, Wallet } from 'lucide-react';
+import { AlertTriangle, ChevronRight, Download, Fuel, LayoutList, Map, MapPin, Package, ScanLine, Settings, ShieldCheck, Smartphone, Star, Tags, Wallet } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { Button, Card, Logo } from '@/design-system';
 import { useSettings } from '@/app/SettingsContext';
@@ -11,6 +11,7 @@ const GROUPS = [
     title: 'Cadastros',
     links: [
       { to: '/lugares', label: 'Lugares', icon: MapPin },
+      { to: '/mapa', label: 'Mapa', icon: Map },
       { to: '/produtos', label: 'Produtos', icon: Package },
       { to: '/tipos', label: 'Tipos de lugar', icon: LayoutList },
       { to: '/marcas', label: 'Marcas e categorias', icon: Tags },
@@ -37,7 +38,8 @@ const GROUPS = [
 export default function MorePage() {
   const { settings } = useSettings();
   const install = useInstallPrompt();
-  const backupOld = !settings.lastBackupAt || daysBetween(settings.lastBackupAt) > 30;
+  const lastAny = [settings.lastBackupAt, settings.autoBackup ? settings.lastAutoBackupAt : undefined].filter(Boolean).sort().pop();
+  const backupOld = !lastAny || daysBetween(lastAny) > 30;
 
   return (
     <div className="flex flex-col gap-6">
@@ -45,7 +47,7 @@ export default function MorePage() {
       {backupOld && (
         <Link to="/backup" className="flex items-center gap-3 rounded-lg border border-warn/40 bg-warn/[.08] p-4 text-sm">
           <AlertTriangle className="h-5 w-5 shrink-0 text-warn" aria-hidden />
-          <span className="flex-1">{settings.lastBackupAt ? 'Seu último backup tem mais de 30 dias.' : 'Você ainda não fez backup. Seus dados só existem neste aparelho.'}</span>
+          <span className="flex-1">{lastAny ? 'Seu último backup tem mais de 30 dias.' : 'Você ainda não fez backup. Seus dados só existem neste aparelho.'}</span>
           <ChevronRight className="h-4 w-4 text-muted" aria-hidden />
         </Link>
       )}

@@ -59,6 +59,11 @@ export const placeSchema = z.object({
     .max(200_000)
     .regex(/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/)
     .optional(),
+  favorite: z.boolean().optional(),
+  lat: z.number().min(-90).max(90).optional(),
+  lng: z.number().min(-180).max(180).optional(),
+  geo: z.enum(['exact', 'street', 'area', 'none']).optional(),
+  geoAt: iso.optional(),
   ...stamps,
 });
 export const priceSchema = z.object({

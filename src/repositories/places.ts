@@ -23,6 +23,15 @@ export interface PlaceInput {
   logo?: string | null;
 }
 
+const sameAddress = (a: Pick<Place, 'address' | 'neighborhood' | 'city'>, b: Pick<PlaceInput, 'address' | 'neighborhood' | 'city'>) =>
+  (cleanText(a.address, 200) ?? '') === (cleanText(b.address, 200) ?? '') &&
+  (cleanText(a.neighborhood, 80) ?? '') === (cleanText(b.neighborhood, 80) ?? '') &&
+  (cleanText(a.city, 80) ?? '') === (cleanText(b.city, 80) ?? '');
+
+export async function setFavorite(id: ID, favorite: boolean): Promise<void> {
+  await db.stores.update(id, { favorite: favorite || undefined, updatedAt: nowISO() });
+}
+
 /** Cria ou atualiza um lugar (mercado, farmácia, posto...). */
 export async function savePlace(input: PlaceInput, id?: ID): Promise<ID> {
   const name = cleanText(input.name, 100);
@@ -49,6 +58,8 @@ export async function savePlace(input: PlaceInput, id?: ID): Promise<ID> {
     flag: segment.mode === 'fuel' ? cleanText(input.flag, 60) : undefined,
     cnpj: input.cnpj ?? prev?.cnpj,
     logo: input.logo === null ? undefined : (input.logo ?? prev?.logo),
+    favorite: prev?.favorite,
+    ...(prev && sameAddress(prev, input) ? { lat: prev.lat, lng: prev.lng, geo: prev.geo, geoAt: prev.geoAt } : {}),
     notes: cleanText(input.notes, 1000),
     color: input.color,
     active: input.active,

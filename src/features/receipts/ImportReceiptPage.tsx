@@ -273,7 +273,7 @@ export function ReceiptReview({ draft, onRestart }: { draft: ReceiptDraft; onRes
           )
         }
       >
-        <p className="-mt-1 mb-3 text-xs text-muted">Toque em um item para trocar o produto ou ignorá-lo.</p>
+        <p className="-mt-1 mb-3 text-xs text-muted">Toque em um item para trocar o produto ou ignorá-lo. “Parecido” foi ligado por semelhança: confira.</p>
         <Card as="section" className="divide-y divide-line" aria-label="Itens da nota">
           {draft.items.map((it, i) => {
             const d = decisions[i];
@@ -284,11 +284,14 @@ export function ReceiptReview({ draft, onRestart }: { draft: ReceiptDraft; onRes
                   ? { tone: 'info' as const, label: 'Combustível', text: FUEL_LABEL[d.fuel] }
                   : d.action === 'new'
                     ? { tone: 'info' as const, label: 'Novo', text: withPackage(d.name || 'Sem nome', d.packageSize, UNIT_INFO[d.unit].label) }
-                    : {
-                        tone: 'good' as const,
-                        label: it.matchedBy === 'link' && it.decision.action === 'link' && it.decision.productId === d.productId ? 'Reconhecido' : 'Cadastrado',
-                        text: productMap.get(d.productId)?.name ?? 'Escolha o produto',
-                      };
+                    : it.matchedBy === 'similar' && it.decision.action === 'link' && it.decision.productId === d.productId
+                      ? { tone: 'warn' as const, label: 'Parecido', text: productMap.get(d.productId)?.name ?? 'Escolha o produto' }
+                      : {
+                          tone: 'good' as const,
+                          label: it.matchedBy === 'link' && it.decision.action === 'link' && it.decision.productId === d.productId ? 'Reconhecido' : 'Cadastrado',
+                          text: productMap.get(d.productId)?.name ?? 'Escolha o produto',
+                        };
+            const maybe = d.action === 'new' && it.similar ? productMap.get(it.similar.productId) : undefined;
             return (
               <button
                 key={i}
@@ -309,6 +312,7 @@ export function ReceiptReview({ draft, onRestart }: { draft: ReceiptDraft; onRes
                     <span className="min-w-0 flex-1 truncate text-sm font-semibold">{status.text}</span>
                     <Pencil className="h-3.5 w-3.5 shrink-0 text-muted" aria-hidden />
                   </div>
+                  {maybe && <div className="mt-1 truncate text-xs text-warn">Talvez seja: {maybe.name}</div>}
                 </div>
               </button>
             );
@@ -335,6 +339,11 @@ export function ReceiptReview({ draft, onRestart }: { draft: ReceiptDraft; onRes
             <ItemControl
               decision={decisions[editing]}
               suggestion={draft.items[editing].decision}
+              similar={(() => {
+                const sim = draft.items[editing].similar;
+                const p = sim ? productMap.get(sim.productId) : undefined;
+                return p && sim ? { productId: p.id, name: p.name } : undefined;
+              })()}
               onChange={(nd) => setItem(editing, nd)}
               products={products ?? []}
               brands={brands}
@@ -374,6 +383,7 @@ export function ReceiptReview({ draft, onRestart }: { draft: ReceiptDraft; onRes
 function ItemControl({
   decision,
   suggestion,
+  similar,
   onChange,
   products,
   brands,
@@ -381,6 +391,7 @@ function ItemControl({
 }: {
   decision: ItemDecision;
   suggestion: ItemDecision;
+  similar?: { productId: ID; name: string };
   onChange: (d: ItemDecision) => void;
   products: Product[];
   brands: Map<ID, Brand>;
@@ -396,7 +407,7 @@ function ItemControl({
         onChange={(v) => {
           if (v === 'skip') onChange({ action: 'skip' });
           else if (v === 'new') onChange(fallbackNew);
-          else onChange(suggestion.action === 'link' ? suggestion : { action: 'link', productId: '' });
+          else onChange(suggestion.action === 'link' ? suggestion : { action: 'link', productId: similar?.productId ?? '' });
         }}
         options={[
           { value: 'link', label: 'Já cadastrado' },
@@ -404,6 +415,16 @@ function ItemControl({
           { value: 'skip', label: 'Ignorar' },
         ]}
       />
+      {decision.action === 'new' && similar && (
+        <div className="flex flex-col gap-2 rounded-lg border border-warn/40 bg-warn/[.08] p-3 text-sm">
+          <p>
+            Parecido com <strong>{similar.name}</strong>, que você já tem.
+          </p>
+          <Button size="sm" variant="secondary" className="self-start" onClick={() => onChange({ action: 'link', productId: similar.productId })}>
+            Usar este produto
+          </Button>
+        </div>
+      )}
       {decision.action === 'new' && (
         <>
           <TextField label="Nome do produto" value={decision.name} onChange={(e) => onChange({ ...decision, name: e.target.value })} />

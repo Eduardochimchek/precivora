@@ -3,9 +3,12 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { MapPin, Pencil, ShoppingCart, Store as StoreIcon, Tag, Trash2 } from 'lucide-react';
 import { db } from '@/db/database';
+import { hasCoords } from '@/services/geo';
+import { Map as MapIcon } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { Button, Card, Chip, EmptyState, IconButton, ListSkeleton, PlaceMark, Section, Stat, useFeedback } from '@/design-system';
 import { useActions } from '@/features/forms/ActionsContext';
+import { FavoriteButton } from './FavoriteButton';
 import { useSettings } from '@/app/SettingsContext';
 import { usePrices, useProducts } from '@/hooks/useData';
 import { productStats } from '@/services/comparison';
@@ -81,9 +84,12 @@ export default function StoreDetailPage() {
           </span>
         }
         actions={
-          <IconButton label="Editar lugar" onClick={() => actions.openPlace({ placeId: store.id })}>
-            <Pencil className="h-5 w-5" />
-          </IconButton>
+          <>
+            <FavoriteButton place={store} />
+            <IconButton label="Editar lugar" onClick={() => actions.openPlace({ placeId: store.id })}>
+              <Pencil className="h-5 w-5" />
+            </IconButton>
+          </>
         }
       />
       <div className="flex items-center gap-4">
@@ -140,6 +146,15 @@ export default function StoreDetailPage() {
             <MapPin className="h-4 w-4" aria-hidden />
             Abrir no mapa
           </a>
+        )}
+        {hasCoords(store) && (
+          <Link
+            to={`/mapa?lugar=${store.id}`}
+            className="inline-flex h-9 items-center gap-1.5 rounded-md border border-line px-3 text-sm font-semibold hover:bg-sunken"
+          >
+            <MapIcon className="h-4 w-4" aria-hidden />
+            Ver no mapa
+          </Link>
         )}
         <Button variant="ghost" size="sm" className="text-danger" icon={<Trash2 className="h-4 w-4" />} onClick={remove}>
           Excluir lugar
