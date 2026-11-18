@@ -1,18 +1,15 @@
 import type { ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { IconButton } from '@/design-system';
+import { useGoBack } from '@/app/useGoBack';
 
+/** `back`: mostra o Voltar, que volta à tela anterior; a string é para onde ir quando não há tela anterior (link direto). */
 export function PageHeader({ title, subtitle, back, actions }: { title: string; subtitle?: ReactNode; back?: boolean | string; actions?: ReactNode }) {
-  const navigate = useNavigate();
+  const goBack = useGoBack();
   return (
     <header className="flex flex-wrap items-start gap-x-2 gap-y-3 pb-5 pt-5 md:pt-9">
       {back && (
-        <IconButton
-          label="Voltar"
-          className="-ml-3 mt-0.5"
-          onClick={() => (typeof back === 'string' ? navigate(back) : window.history.length > 1 ? navigate(-1) : navigate('/'))}
-        >
+        <IconButton label="Voltar" className="-ml-3 mt-0.5" onClick={() => goBack(typeof back === 'string' ? back : '/')}>
           <ArrowLeft className="h-5 w-5" />
         </IconButton>
       )}

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useGoBack } from '@/app/useGoBack';
 import { Plus, ShoppingCart, Trash2 } from 'lucide-react';
 import { db } from '@/db/database';
 import { PageHeader } from '@/components/PageHeader';
@@ -27,6 +28,7 @@ export default function PurchaseFormPage() {
   const { id } = useParams();
   const [params] = useSearchParams();
   const navigate = useNavigate();
+  const goBack = useGoBack();
   const actions = useActions();
   const { toast, confirm } = useFeedback();
   const products = useProducts();
@@ -213,7 +215,7 @@ export default function PurchaseFormPage() {
               if (await confirm({ title: 'Excluir compra?', message: 'Os preços confirmados por esta compra também saem do histórico.', confirmLabel: 'Excluir', danger: true })) {
                 await deletePurchase(id);
                 toast('Compra excluída');
-                navigate('/historico', { replace: true });
+                goBack('/historico');
               }
             }}
           >

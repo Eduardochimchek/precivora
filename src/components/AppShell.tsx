@@ -1,7 +1,7 @@
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 import { ErrorBoundary, ScreenError } from './ErrorBoundary';
 import { Fuel, History, House, LayoutGrid, ListChecks, MapPin, Package, Scale, Settings, Wallet } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Logo, cx } from '@/design-system';
 
 const MAIN = [
@@ -28,9 +28,16 @@ const SECTION: [RegExp, string][] = [
   [/^\/(mais|lugares|tipos|mercados|postos|produtos$|marcas|avaliacoes|orcamento|backup|ajustes)/, '/mais'],
 ];
 
+/** Telas abertas de vários lugares: mantêm acesa a aba de onde a pessoa veio. */
+const SHARED = /^\/(produtos\/|lugares\/|mercados\/|postos\/|mapa|notas\/|compras\/)/;
+
 export function AppShell() {
   const { pathname } = useLocation();
-  const section = SECTION.find(([re]) => re.test(pathname))?.[1] ?? (pathname === '/' ? '/' : '');
+  const lastSection = useRef('');
+  const mapped = SECTION.find(([re]) => re.test(pathname))?.[1] ?? (pathname === '/' ? '/' : '');
+  const shared = SHARED.test(pathname);
+  const section = shared && lastSection.current ? lastSection.current : mapped;
+  if (!shared && mapped) lastSection.current = mapped;
 
   useEffect(() => {
     window.scrollTo({ top: 0 });
@@ -68,13 +75,12 @@ export function AppShell() {
         className="pb-safe fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 backdrop-blur-md md:hidden"
       >
         <ul className="mx-auto flex h-[var(--nav-h)] max-w-lg items-stretch">
-          {MAIN.map(({ to, label, icon: Icon, end, tour }) => {
+          {MAIN.map(({ to, label, icon: Icon, tour }) => {
             const active = section === to;
             return (
               <li key={to} className="flex-1" data-tour={tour}>
-                <NavLink
+                <Link
                   to={to}
-                  end={end}
                   aria-current={active ? 'page' : undefined}
                   className="group flex h-full flex-col items-center justify-center gap-1 text-[11px] font-semibold"
                 >
@@ -87,7 +93,7 @@ export function AppShell() {
                     <Icon className="h-[20px] w-[20px]" strokeWidth={active ? 2.4 : 2} aria-hidden />
                   </span>
                   <span className={active ? 'text-ink' : 'text-muted'}>{label}</span>
-                </NavLink>
+                </Link>
               </li>
             );
           })}
@@ -97,11 +103,10 @@ export function AppShell() {
   );
 }
 
-function SideLink({ to, label, icon: Icon, active, end, tour }: { to: string; label: string; icon: typeof House; active: boolean; end?: boolean; tour?: string }) {
+function SideLink({ to, label, icon: Icon, active, tour }: { to: string; label: string; icon: typeof House; active: boolean; end?: boolean; tour?: string }) {
   return (
-    <NavLink
+    <Link
       to={to}
-      end={end}
       data-tour={tour}
       aria-current={active ? 'page' : undefined}
       className={cx(
@@ -111,6 +116,6 @@ function SideLink({ to, label, icon: Icon, active, end, tour }: { to: string; la
     >
       <Icon className={cx('h-5 w-5', active && 'text-lime')} aria-hidden />
       {label}
-    </NavLink>
+    </Link>
   );
 }

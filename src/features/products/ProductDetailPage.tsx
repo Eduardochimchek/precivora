@@ -1,5 +1,6 @@
 import { lazy, Suspense, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useGoBack } from '@/app/useGoBack';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Archive, ArchiveRestore, Ban, Heart, ListPlus, Pencil, ShoppingCart, Star, Tag, Trash2 } from 'lucide-react';
 import { db } from '@/db/database';
@@ -22,6 +23,7 @@ const PriceHistoryChart = lazy(() => import('./PriceHistoryChart').then((m) => (
 export default function ProductDetailPage() {
   const { id = '' } = useParams();
   const navigate = useNavigate();
+  const goBack = useGoBack();
   const { toast, confirm } = useFeedback();
   const actions = useActions();
   const { settings } = useSettings();
@@ -70,7 +72,7 @@ export default function ProductDetailPage() {
     try {
       await deleteProduct(product!.id);
       toast('Produto excluído');
-      navigate('/comparar', { replace: true });
+      goBack('/comparar');
     } catch (err) {
       toast((err as Error).message, 'error');
     }

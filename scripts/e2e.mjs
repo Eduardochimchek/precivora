@@ -310,6 +310,22 @@ try {
     assert(txt.includes('R$ 5,999'), 'preço novo no Posto Trevo não apareceu no ranking');
   });
 
+  await step('voltar retorna à tela de origem e a aba de origem fica acesa', async () => {
+    const activeTab = () => page.evaluate(() => [...document.querySelectorAll('nav.fixed a[aria-current="page"]')].map((a) => a.textContent.trim()).join('/'));
+    await go('/');
+    await page.locator('main a[href="#/orcamento"]').first().click();
+    await page.getByRole('button', { name: 'Voltar', exact: true }).click();
+    await page.waitForTimeout(300);
+    assert((await page.evaluate(() => location.hash)) === '#/', 'Voltar do Orçamento aberto pelo Início não voltou ao Início');
+    await go('/combustiveis?f=gasolina_comum');
+    await page.locator('main a[href^="#/lugares/"]').first().click();
+    await page.waitForTimeout(300);
+    assert((await activeTab()) === 'Comparar', `posto aberto por Combustíveis acendeu a aba "${await activeTab()}"`);
+    await page.getByRole('button', { name: 'Voltar', exact: true }).click();
+    await page.waitForTimeout(300);
+    assert((await page.evaluate(() => location.hash)) === '#/combustiveis?f=gasolina_comum', 'Voltar do posto não voltou a Combustíveis');
+  });
+
   await step('perto de mim: posto sem preço aparece para anotar e posto fora do mapa é avisado', async () => {
     await mobile.grantPermissions(['geolocation']);
     await mobile.setGeolocation({ latitude: -28.68, longitude: -49.37 });

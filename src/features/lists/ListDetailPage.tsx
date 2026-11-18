@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useGoBack } from '@/app/useGoBack';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Archive, ArchiveRestore, Check, Copy, Info, ListChecks, Minus, Pencil, Plus, Route, ShoppingCart, Trash2, Trophy } from 'lucide-react';
 import { db } from '@/db/database';
@@ -27,6 +28,7 @@ const PRIORITY_ORDER: Priority[] = ['alta', 'media', 'baixa'];
 export default function ListDetailPage() {
   const { id = '' } = useParams();
   const navigate = useNavigate();
+  const goBack = useGoBack();
   const actions = useActions();
   const { toast, confirm } = useFeedback();
   const { settings, update } = useSettings();
@@ -333,7 +335,7 @@ export default function ListDetailPage() {
             if (await confirm({ title: 'Excluir lista?', message: `"${list.name}" e seus ${items.length} itens serão apagados.`, confirmLabel: 'Excluir', danger: true })) {
               await deleteList(list.id);
               toast('Lista excluída');
-              navigate('/listas', { replace: true });
+              goBack('/listas');
             }
           }}
         >

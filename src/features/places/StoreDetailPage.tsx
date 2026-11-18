@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useGoBack } from '@/app/useGoBack';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { MapPin, Pencil, ShoppingCart, Store as StoreIcon, Tag, Trash2 } from 'lucide-react';
 import { db } from '@/db/database';
@@ -21,6 +22,7 @@ import type { ID, PriceRecord } from '@/types';
 export default function StoreDetailPage() {
   const { id = '' } = useParams();
   const navigate = useNavigate();
+  const goBack = useGoBack();
   const actions = useActions();
   const { toast, confirm } = useFeedback();
   const { settings } = useSettings();
@@ -66,7 +68,7 @@ export default function StoreDetailPage() {
     try {
       await deletePlace(store!.id);
       toast('Lugar excluído');
-      navigate('/lugares', { replace: true });
+      goBack('/lugares');
     } catch (err) {
       toast((err as Error).message, 'error');
     }

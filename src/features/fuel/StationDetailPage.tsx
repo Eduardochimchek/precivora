@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useGoBack } from '@/app/useGoBack';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Fuel, MapPin, Pencil, Plus, Trash2 } from 'lucide-react';
 import { db } from '@/db/database';
@@ -21,6 +22,7 @@ import { money3 } from '@/utils/format';
 export default function StationDetailPage() {
   const { id = '' } = useParams();
   const navigate = useNavigate();
+  const goBack = useGoBack();
   const actions = useActions();
   const { toast, confirm } = useFeedback();
   const station = useLiveQuery(() => db.stores.get(id).then((s) => s ?? null), [id]);
@@ -157,7 +159,7 @@ export default function StationDetailPage() {
             if (await confirm({ title: `Excluir ${station.name}?`, message: `Os ${mine.length} preços deste posto também serão apagados.`, confirmLabel: 'Excluir', danger: true })) {
               await deletePlace(station.id);
               toast('Posto excluído');
-              navigate('/lugares', { replace: true });
+              goBack('/lugares');
             }
           }}
         >
