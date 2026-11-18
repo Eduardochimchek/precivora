@@ -104,5 +104,6 @@ QR Code (leitor do Google) ─▶ link da Fazenda ─▶ tela nativa com WebView
 - `services/geo.ts`: distância (haversine), rua/número a partir do endereço livre, pedidos ao Nominatim (rua com número; se falhar, bairro) e leitura da resposta (recusa cidade diferente).
 - `app/geocodeRunner.ts`: localiza em segundo plano os lugares sem coordenadas, um pedido a cada 1,1 s (regra do Nominatim), com User-Agent próprio no app. Precisão guardada em `geo` (`exact`, `street`, `area`, `none`); “não encontrado” tenta de novo depois de 30 dias; mudar o endereço apaga a localização.
 - `app/location.ts`: posição do aparelho (plugin de geolocalização no app; `navigator.geolocation` no navegador), só sob ação da pessoa e guardada por 5 minutos na sessão.
+- `app/useLocate.tsx`: passo único do “Perto de mim” e do filtro por distância. Sem permissão ou com a localização do Android desligada, mostra antes um aviso explicando o uso; desligada, chama o plugin nativo `LocationSettings` (`LocationSettingsPlugin.java`, `SettingsClient` do Google Play Services), que abre a janela do Google para ligar sem sair do app. Desistir em qualquer etapa não mostra erro.
 - `features/map/MapPage.tsx`: Leaflet com os tiles do OpenStreetMap (no tema escuro, um filtro CSS escurece o mapa).
 

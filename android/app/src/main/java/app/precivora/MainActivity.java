@@ -9,6 +9,7 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(SystemThemePlugin.class);
         registerPlugin(NfceBrowserPlugin.class);
+        registerPlugin(LocationSettingsPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

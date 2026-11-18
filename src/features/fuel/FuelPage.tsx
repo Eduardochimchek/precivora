@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Calculator, Crosshair, Fuel, Map as MapIcon, MapPin, Plus, Star } from 'lucide-react';
-import { currentPosition, lastKnownPosition } from '@/app/location';
+import { lastKnownPosition } from '@/app/location';
+import { useLocate } from '@/app/useLocate';
 import { distanceKm, formatDistance, hasCoords, type LatLng } from '@/services/geo';
 import { PageHeader } from '@/components/PageHeader';
-import { Button, Card, ChangeBadge, Chip, EmptyState, ListSkeleton, PlaceMark, PriceTag, Section, TextField, cx, useFeedback } from '@/design-system';
+import { Button, Card, ChangeBadge, Chip, EmptyState, ListSkeleton, PlaceMark, PriceTag, Section, TextField, cx } from '@/design-system';
 import { useActions } from '@/features/forms/ActionsContext';
 import { SegmentTabs } from '@/features/compare/SegmentTabs';
 import { AnpCard } from './AnpCard';
@@ -32,7 +33,7 @@ export default function FuelPage() {
   const radius = Number(params.get('perto')) || 0;
   const [me, setMe] = useState<LatLng | undefined>(lastKnownPosition());
   const [locating, setLocating] = useState(false);
-  const { toast } = useFeedback();
+  const locate = useLocate();
   const distOf = (id: string) => {
     const st = stationMap.get(id);
     return me && st && hasCoords(st) && st.geo !== 'none' ? distanceKm(me, st) : undefined;
@@ -61,14 +62,9 @@ export default function FuelPage() {
     if (!km) return setFilter({ perto: null });
     if (!me) {
       setLocating(true);
-      try {
-        setMe(await currentPosition());
-      } catch (err) {
-        toast((err as Error).message || 'Não consegui pegar a localização.', 'error');
-        return;
-      } finally {
-        setLocating(false);
-      }
+      const pos = await locate().finally(() => setLocating(false));
+      if (!pos) return;
+      setMe(pos);
     }
     setFilter({ perto: String(km) });
   }

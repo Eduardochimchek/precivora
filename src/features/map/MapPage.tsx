@@ -4,9 +4,10 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Crosshair, Navigation, Star } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
-import { Button, Card, PlaceMark, SegmentIcon, cx, useFeedback } from '@/design-system';
+import { Button, Card, PlaceMark, SegmentIcon, cx } from '@/design-system';
 import { useFuelPrices, usePlaces, useSegments } from '@/hooks/useData';
-import { currentPosition, lastKnownPosition } from '@/app/location';
+import { lastKnownPosition } from '@/app/location';
+import { useLocate } from '@/app/useLocate';
 import { GEOCODE_EVENT, geocodeStatus, runGeocoding, type GeocodeProgress } from '@/app/geocodeRunner';
 import { distanceKm, formatDistance, hasCoords, PRECISION_LABEL, type LatLng } from '@/services/geo';
 import { FUEL_SHORT } from '@/services/fuel';
@@ -18,7 +19,7 @@ const ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">Op
 
 export default function MapPage() {
   const [params, setParams] = useSearchParams();
-  const { toast } = useFeedback();
+  const locateMe = useLocate();
   const segments = useSegments() ?? [];
   const places = usePlaces();
   const fuelPrices = useFuelPrices();
@@ -123,15 +124,10 @@ export default function MapPage() {
 
   async function locate() {
     setLocating(true);
-    try {
-      const p = await currentPosition();
-      setMe(p);
-      map.current?.setView([p.lat, p.lng], 14);
-    } catch (err) {
-      toast((err as Error).message || 'Não consegui pegar a localização.', 'error');
-    } finally {
-      setLocating(false);
-    }
+    const p = await locateMe().finally(() => setLocating(false));
+    if (!p) return;
+    setMe(p);
+    map.current?.setView([p.lat, p.lng], 14);
   }
 
   const set = (patch: Record<string, string | null>) => {

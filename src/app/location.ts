@@ -1,6 +1,31 @@
+import { registerPlugin } from '@capacitor/core';
 import { Geolocation } from '@capacitor/geolocation';
 import type { LatLng } from '@/services/geo';
 import { isNative } from './native';
+
+const LocationSettings = registerPlugin<{ enable(): Promise<{ enabled: boolean }> }>('LocationSettings');
+
+export type LocationState = 'ready' | 'off' | 'ask';
+
+/** No app: 'off' = localização do Android desligada; 'ask' = falta a permissão do app. */
+export async function locationState(): Promise<LocationState> {
+  if (!isNative) return 'ready';
+  try {
+    const p = await Geolocation.checkPermissions();
+    return p.location === 'granted' || p.coarseLocation === 'granted' ? 'ready' : 'ask';
+  } catch (e) {
+    return /not enabled/i.test((e as Error)?.message ?? '') ? 'off' : 'ask';
+  }
+}
+
+/** Abre a janela do Google para ligar a localização sem sair do app. true = ligou. */
+export async function enableLocation(): Promise<boolean> {
+  try {
+    return (await LocationSettings.enable()).enabled;
+  } catch {
+    return false;
+  }
+}
 
 const KEY = 'precivora:posicao';
 const MAX_AGE_MS = 5 * 60 * 1000;
