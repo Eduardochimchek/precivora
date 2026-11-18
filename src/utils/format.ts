@@ -12,12 +12,15 @@ export const signedPercent = (v: number) => (v > 0 ? '+' : '') + pct.format(v);
 
 /** Converte texto digitado ("23,90", "R$ 1.234,5") em número. */
 export function parseDecimal(input: string): number {
-  const s = String(input).replace(/[^\d,.-]/g, '');
-  if (!s) return NaN;
+  const s = String(input).replace(/^\s*R\$\s*/i, '').replace(/\s/g, '');
+  if (!s || /[^\d,.-]/.test(s)) return NaN;
   const hasComma = s.includes(',');
   const normalized = hasComma ? s.replace(/\./g, '').replace(',', '.') : s;
   return Number(normalized);
 }
+
+/** Casas decimais digitadas ("5,999" → 3). */
+export const decimalPlaces = (input: string) => /[.,](\d+)\s*$/.exec(String(input).trim())?.[1].length ?? 0;
 
 export function toInputDecimal(v: number | undefined, digits = 2): string {
   if (v == null || !Number.isFinite(v)) return '';

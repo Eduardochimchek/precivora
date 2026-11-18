@@ -1,4 +1,5 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { ErrorBoundary, ScreenError } from './ErrorBoundary';
 import { Fuel, History, House, LayoutGrid, ListChecks, MapPin, Package, Scale, Settings, Wallet } from 'lucide-react';
 import { useEffect } from 'react';
 import { Logo, cx } from '@/design-system';
@@ -56,7 +57,9 @@ export function AppShell() {
 
       <main id="conteudo" className="pb-nav pt-safe min-w-0 md:pb-12">
         <div className={cx('mx-auto w-full max-w-3xl px-4 md:px-8', pathname === '/' && 'xl:max-w-6xl')}>
-          <Outlet />
+          <ErrorBoundary key={pathname} fallback={<ScreenError />}>
+            <Outlet />
+          </ErrorBoundary>
         </div>
       </main>
 

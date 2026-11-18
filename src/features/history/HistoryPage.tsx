@@ -237,7 +237,7 @@ export default function HistoryPage() {
           )}
 
           {(data.movers.up.length > 0 || data.movers.down.length > 0) && (
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <MoverList title="Mais subiram" items={data.movers.up.slice(0, 5)} up />
               <MoverList title="Mais caíram" items={data.movers.down.slice(0, 5)} />
             </div>

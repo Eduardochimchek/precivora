@@ -65,7 +65,7 @@ export default function StationDetailPage() {
       </div>
 
       {fuels.length ? (
-        <div className="grid gap-2 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {fuels.map((f) => {
             const recs = mine.filter((r) => r.fuel === f);
             const rank = rankStations(all.filter((r) => r.fuel === f), f);

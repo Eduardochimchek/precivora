@@ -153,7 +153,49 @@ export const tableSchemas = {
 } as const;
 
 /** Primeira mensagem de erro legível de um resultado do zod. */
+const FIELD_LABEL: Record<string, string> = {
+  name: 'Nome',
+  price: 'Preço',
+  packageSize: 'Conteúdo da embalagem',
+  quantity: 'Quantidade',
+  unitPrice: 'Preço unitário',
+  barcode: 'Código de barras',
+  address: 'Endereço',
+  neighborhood: 'Bairro',
+  city: 'Cidade',
+  notes: 'Observações',
+  description: 'Descrição',
+  date: 'Data',
+  image: 'Foto',
+  logo: 'Logo',
+  cnpj: 'CNPJ',
+  color: 'Cor',
+  flag: 'Bandeira',
+  subcategory: 'Subcategoria',
+  limit: 'Limite',
+};
+
+const num = (n: unknown) => (typeof n === 'number' || typeof n === 'bigint' ? Number(n).toLocaleString('pt-BR') : String(n));
+
+/** Primeiro problema de validação, em português e com o nome do campo. */
 export function firstIssue(err: z.ZodError): string {
-  const i = err.issues[0];
-  return i ? `${i.path.join('.') || 'valor'}: ${i.message}` : 'Dados inválidos';
+  const i = err.issues[0] as z.core.$ZodIssue | undefined;
+  if (!i) return 'Dados inválidos';
+  const key = String(i.path[i.path.length - 1] ?? '');
+  const label = FIELD_LABEL[key] ?? 'Valor';
+  const isText = 'origin' in i && i.origin === 'string';
+  switch (i.code) {
+    case 'too_big':
+      return isText ? `${label}: no máximo ${num(i.maximum)} caracteres` : `${label}: o máximo é ${num(i.maximum)}`;
+    case 'too_small':
+      return isText ? `${label}: obrigatório` : `${label}: o mínimo é ${num(i.minimum)}`;
+    case 'invalid_type':
+      return `${label}: valor inválido`;
+    case 'invalid_format':
+      return `${label}: formato inválido`;
+    case 'invalid_value':
+      return `${label}: opção inválida`;
+    default:
+      return /^[A-Za-z ]+:/.test(i.message) || /expected|invalid/i.test(i.message) ? `${label}: valor inválido` : i.message;
+  }
 }

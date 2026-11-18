@@ -100,7 +100,7 @@ export default function StoreDetailPage() {
           <Stat label="Compras" value={purchases?.length ?? 0} sub={purchases?.length ? money(purchases.reduce((s, p) => s + p.total, 0)) : undefined} />
         </div>
       </div>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Button className="flex-1" icon={<Tag className="h-4 w-4" />} onClick={() => actions.openPrice({ storeId: store.id })}>
           Registrar preço aqui
         </Button>

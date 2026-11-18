@@ -310,6 +310,24 @@ try {
     assert(txt.includes('R$ 5,999'), 'preço novo no Posto Trevo não apareceu no ranking');
   });
 
+  await step('endereço inválido não quebra a tela e o erro não trava o app', async () => {
+    for (const r of ['/combustiveis?f=lixo', '/mapa?f=lixo&tipo=nada&lugar=xyz', '/produtos/nao-existe', '/lugares?tipo=nada&fav=1', '/comparar?q=%28%28%28']) {
+      await go(r);
+      const t = await page.locator('main').innerText();
+      assert(!t.includes('Algo deu errado'), `${r} quebrou a tela`);
+    }
+  });
+
+  await step('sem rolagem horizontal em 360 px', async () => {
+    await page.setViewportSize({ width: 360, height: 760 });
+    for (const r of ['/', '/historico', '/comparar', '/combustiveis', '/lugares', '/listas', '/compras/nova', '/mais']) {
+      await go(r);
+      const sw = await page.evaluate(() => document.documentElement.scrollWidth);
+      assert(sw <= 361, `${r} vaza para o lado em 360 px (largura ${sw})`);
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
+  });
+
   await step('lista: compara mercados e recomenda', async () => {
     await go('/listas');
     await page.getByRole('link', { name: /Compra do mês/ }).click();

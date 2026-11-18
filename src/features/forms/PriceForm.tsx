@@ -8,7 +8,7 @@ import { savePrice } from '@/repositories/prices';
 import { compareWithLast } from '@/services/comparison';
 import { formatUnitPrice, packageLabel, unitPrice } from '@/services/units';
 import { formatDate, fromDateInput, toDateInput } from '@/utils/date';
-import { money, parseDecimal, toInputDecimal } from '@/utils/format';
+import { decimalPlaces, money, parseDecimal, toInputDecimal } from '@/utils/format';
 import { ProductPicker } from './ProductPicker';
 import { useActions } from './ActionsContext';
 import { PlaceSelect } from './PlaceSelect';
@@ -86,6 +86,7 @@ export function PriceForm({ open, onClose, productId: initialProduct, storeId: i
     if (!productId) errs.product = 'Escolha o produto';
     if (!storeId) errs.store = 'Escolha o lugar';
     if (!(value > 0)) errs.price = 'Informe o preço';
+    else if (decimalPlaces(price) > 2) errs.price = 'Use no máximo 2 casas depois da vírgula';
     if (!(qty > 0)) errs.quantity = 'Quantidade inválida';
     setErrors(errs);
     if (Object.keys(errs).length) return;

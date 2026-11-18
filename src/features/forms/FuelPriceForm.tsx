@@ -7,7 +7,7 @@ import { saveFuelPrice } from '@/repositories/prices';
 import { FUEL_LABEL, fuelUnit } from '@/services/fuel';
 import { priceChange } from '@/services/comparison';
 import { formatDateTime, fromDateTimeInput, toDateTimeInput } from '@/utils/date';
-import { money3, parseDecimal, toInputDecimal } from '@/utils/format';
+import { decimalPlaces, money3, parseDecimal, toInputDecimal } from '@/utils/format';
 import { PlacePicker } from './PlacePicker';
 import { useActions } from './ActionsContext';
 
@@ -70,6 +70,7 @@ export function FuelPriceForm({ open, onClose, stationId: initialStation, fuel: 
     const errs: Record<string, string> = {};
     if (!stationId) errs.station = 'Escolha o posto';
     if (!(value > 0 && value < 100)) errs.price = 'Informe o preço por ' + (fuel === 'gnv' ? 'm³' : 'litro');
+    else if (decimalPlaces(price) > 3) errs.price = 'Use no máximo 3 casas depois da vírgula';
     setErrors(errs);
     if (Object.keys(errs).length) return;
     setSaving(true);

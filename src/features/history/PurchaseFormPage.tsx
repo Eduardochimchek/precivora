@@ -139,7 +139,7 @@ export default function PurchaseFormPage() {
   return (
     <div className="flex flex-col gap-5">
       <PageHeader back title={id ? 'Editar compra' : 'Nova compra'} subtitle="Os preços pagos entram no histórico como preço confirmado em compra." />
-      <div className="grid gap-3 sm:grid-cols-[1fr_200px]">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_200px]">
         <PlaceSelect value={storeId} onChange={setStoreId} error={errors.store} />
         <TextField label="Data" type="date" value={date} max={toDateInput()} onChange={(e) => setDate(e.target.value)} />
       </div>

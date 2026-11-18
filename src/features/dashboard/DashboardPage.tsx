@@ -186,7 +186,7 @@ export function DashboardPage() {
             <Counter label="Lugares" value={stores!.length + stations!.length} to="/lugares" />
           </dl>
 
-          <div className="grid gap-8 xl:grid-cols-2 xl:items-start">
+          <div className="grid grid-cols-1 gap-8 xl:grid-cols-2 xl:items-start">
           <Section
             title="Oportunidades"
             id="sec-oportunidades"
@@ -234,7 +234,7 @@ export function DashboardPage() {
             }
           >
             {cheapestFuel.length ? (
-              <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-1">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 xl:grid-cols-1">
                 {cheapestFuel.map(({ fuel, best, spread, count }) => (
                   <Link key={fuel} to={`/combustiveis?f=${fuel}`} className="flex flex-col gap-2 rounded-lg bg-surface p-4 shadow-card hover:bg-sunken">
                     <span className="text-sm font-semibold text-muted">{FUEL_LABEL[fuel]}</span>

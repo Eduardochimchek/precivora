@@ -16,6 +16,7 @@ export default function ListsPage() {
   const items = useLiveQuery(() => db.listItems.toArray(), []);
   const [tab, setTab] = useState<'ativas' | 'arquivadas'>('ativas');
   const [creating, setCreating] = useState(false);
+  const [savingList, setSavingList] = useState(false);
   const [name, setName] = useState('');
   const [error, setError] = useState<string>();
 
@@ -44,7 +45,7 @@ export default function ListsPage() {
           {tab === 'ativas' ? 'Monte a lista com seus produtos e o Precivora calcula o total em cada lugar.' : undefined}
         </EmptyState>
       ) : (
-        <ul className="grid gap-2 sm:grid-cols-2">
+        <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {visible.map((l) => {
             const its = items.filter((i) => i.listId === l.id);
             const done = its.filter((i) => i.checked).length;
@@ -71,7 +72,7 @@ export default function ListsPage() {
         onClose={() => setCreating(false)}
         title="Nova lista"
         footer={
-          <Button type="submit" form="new-list" block>
+          <Button type="submit" form="new-list" block loading={savingList}>
             Criar lista
           </Button>
         }
@@ -80,6 +81,8 @@ export default function ListsPage() {
           id="new-list"
           onSubmit={async (e) => {
             e.preventDefault();
+            if (savingList) return;
+            setSavingList(true);
             try {
               const id = await createList(name);
               setCreating(false);
@@ -88,6 +91,8 @@ export default function ListsPage() {
               navigate(`/listas/${id}`);
             } catch (err) {
               setError((err as Error).message);
+            } finally {
+              setSavingList(false);
             }
           }}
         >

@@ -26,7 +26,8 @@ export default function FuelPage() {
   const { settings } = useSettings();
 
   const available = useMemo(() => FUEL_TYPES.filter((f) => records?.some((r) => r.fuel === f)), [records]);
-  const fuel = (params.get('f') as FuelType) || available[0] || 'gasolina_comum';
+  const fParam = params.get('f') as FuelType | null;
+  const fuel: FuelType = (fParam && FUEL_TYPES.includes(fParam) ? fParam : undefined) || available[0] || 'gasolina_comum';
   const onlyFav = params.get('fav') === '1';
   const radius = Number(params.get('perto')) || 0;
   const [me, setMe] = useState<LatLng | undefined>(lastKnownPosition());

@@ -24,7 +24,8 @@ export default function MapPage() {
   const fuelPrices = useFuelPrices();
   const filter = params.get('tipo') ?? '';
   const onlyFav = params.get('fav') === '1';
-  const fuel = (params.get('f') as FuelType) || 'gasolina_comum';
+  const fParam = params.get('f') as FuelType | null;
+  const fuel: FuelType = fParam && FUEL_TYPES.includes(fParam) ? fParam : 'gasolina_comum';
   const [selected, setSelected] = useState<ID | null>(params.get('lugar'));
   const [me, setMe] = useState<LatLng | undefined>(lastKnownPosition());
   const [locating, setLocating] = useState(false);

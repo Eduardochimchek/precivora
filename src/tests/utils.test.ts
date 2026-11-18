@@ -64,3 +64,23 @@ describe('csv', () => {
     expect(lines[2]).toBe(`"x;y";2;'-10`);
   });
 });
+
+describe('números digitados e mensagens de validação', () => {
+  it('recusa letras no número, mas aceita o R$ na frente', async () => {
+    const { parseDecimal } = await import('@/utils/format');
+    expect(parseDecimal('1e3')).toBeNaN();
+    expect(parseDecimal('12abc')).toBeNaN();
+    expect(parseDecimal('R$ 1.234,56')).toBe(1234.56);
+    expect(parseDecimal(' 7,90 ')).toBe(7.9);
+  });
+
+  it('mostra o problema em português com o nome do campo', async () => {
+    const { productSchema, priceSchema, firstIssue } = await import('@/services/schemas');
+    const big = productSchema.safeParse({ id: 'a', name: 'X', nameKey: 'x', unit: 'kg', packageSize: 999999999, archived: false, createdAt: '2026-01-01', updatedAt: '2026-01-01' });
+    expect(!big.success && firstIssue(big.error)).toBe('Conteúdo da embalagem: o máximo é 100.000');
+    const long = productSchema.safeParse({ id: 'a', name: 'X'.repeat(200), nameKey: 'x', unit: 'kg', packageSize: 1, archived: false, createdAt: '2026-01-01', updatedAt: '2026-01-01' });
+    expect(!long.success && firstIssue(long.error)).toBe('Nome: no máximo 120 caracteres');
+    const zero = priceSchema.safeParse({ id: 'a', productId: 'b', storeId: 'c', price: 0, quantity: 1, date: '2026-01-01', promo: false, source: 'manual', createdAt: '2026-01-01', updatedAt: '2026-01-01' });
+    expect(!zero.success && firstIssue(zero.error)).toMatch(/^Preço/);
+  });
+});
