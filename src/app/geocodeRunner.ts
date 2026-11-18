@@ -48,7 +48,8 @@ export const geocodeStatus = async (): Promise<GeocodeProgress> => ({ pending: a
 
 /**
  * Localiza no mapa os endereços dos lugares, um por vez (1 pedido por segundo, regra do Nominatim/OpenStreetMap).
- * Só envia o endereço do lugar. Roda em segundo plano até acabar, perder a conexão ou o app ser fechado.
+ * Ordem: favoritos, postos com preço, outros postos e depois o resto. Só envia o endereço do lugar.
+ * Roda em segundo plano até acabar, perder a conexão ou o app ser fechado.
  */
 export async function runGeocoding(): Promise<void> {
   if (running || !navigator.onLine) return;
@@ -57,9 +58,12 @@ export async function runGeocoding(): Promise<void> {
   done = 0;
   try {
     await emit();
+    const fuelSegments = new Set((await db.segments.toArray()).filter((s) => s.mode === 'fuel').map((s) => s.id));
+    const priced = new Set((await db.fuelPrices.orderBy('stationId').uniqueKeys()).map(String));
+    const rank = (p: Place) => (p.favorite ? 0 : priced.has(p.id) ? 1 : fuelSegments.has(p.segmentId) ? 2 : 3);
     for (;;) {
       if (stopRequested || !navigator.onLine) break;
-      const next = (await db.stores.toArray()).filter((p) => needsGeocode(p)).sort((a, b) => Number(!!b.favorite) - Number(!!a.favorite))[0];
+      const next = (await db.stores.toArray()).filter((p) => needsGeocode(p)).sort((a, b) => rank(a) - rank(b))[0];
       if (!next) break;
       let found: ReturnType<typeof readGeocode>;
       for (const q of geocodeQueries(next)) {

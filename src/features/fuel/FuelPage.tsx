@@ -52,6 +52,18 @@ export default function FuelPage() {
     [records, stationMap, onlyFav, radius, me],
   );
 
+  const offMap = useMemo(() => {
+    const out = { pending: 0, notFound: 0 };
+    if (!radius || !me) return out;
+    for (const id of new Set((records ?? []).filter((r) => r.fuel === fuel).map((r) => r.stationId))) {
+      const st = stationMap.get(id);
+      if (!st?.active || (onlyFav && !st.favorite) || (hasCoords(st) && st.geo !== 'none')) continue;
+      if (st.geo === 'none') out.notFound++;
+      else out.pending++;
+    }
+    return out;
+  }, [records, stationMap, onlyFav, radius, me, fuel]);
+
   const setFilter = (patch: Record<string, string | null>) => {
     const next = new URLSearchParams(params);
     for (const [k, v] of Object.entries(patch)) (v ? next.set(k, v) : next.delete(k));
@@ -137,6 +149,14 @@ export default function FuelPage() {
             <h2 id="ranking" className="sr-only">
               Ranking de {FUEL_LABEL[fuel]}
             </h2>
+            {offMap.pending + offMap.notFound > 0 && (
+              <p className="mb-2 rounded-lg bg-sunken px-3 py-2 text-sm text-muted" role="note">
+                {offMap.pending > 0 &&
+                  `${offMap.pending} ${offMap.pending === 1 ? 'posto com preço ainda não está' : 'postos com preço ainda não estão'} no mapa e ${offMap.pending === 1 ? 'fica' : 'ficam'} fora deste filtro. O app está localizando os endereços, um por segundo, enquanto estiver aberto. `}
+                {offMap.notFound > 0 &&
+                  `${offMap.notFound} ${offMap.notFound === 1 ? 'posto não teve o endereço encontrado' : 'postos não tiveram o endereço encontrado'}; corrija o endereço no cadastro para ${offMap.notFound === 1 ? 'ele entrar' : 'eles entrarem'}.`}
+              </p>
+            )}
             {ranking.length ? (
               <Card className="divide-y divide-line overflow-hidden">
                 {ranking.map((q, i) => {
