@@ -306,7 +306,7 @@ function FlexCalculator({ records, ratio }: { records: Parameters<typeof rankSta
   return (
     <Section title="Etanol ou gasolina?" id="flex">
       <Card className="p-4">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 items-end gap-3">
           <TextField label="Etanol" prefix="R$" inputMode="decimal" value={ethanol} onChange={(ev) => setEthanol(ev.target.value)} />
           <TextField label="Gasolina" prefix="R$" inputMode="decimal" value={gasoline} onChange={(ev) => setGasoline(ev.target.value)} />
           <TextField

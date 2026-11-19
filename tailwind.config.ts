@@ -7,6 +7,7 @@ export default {
   darkMode: ['class'],
   theme: {
     extend: {
+      screens: { short: { raw: '(max-height: 480px)' } },
       colors: {
         bg: token('bg'),
         surface: token('surface'),

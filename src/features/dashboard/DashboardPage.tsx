@@ -191,7 +191,7 @@ export function DashboardPage() {
             title="Oportunidades"
             id="sec-oportunidades"
             action={
-              <Link to="/comparar" className="text-sm font-semibold text-accent">
+              <Link to="/comparar" className="-my-2.5 py-2.5 pl-3 text-sm font-semibold text-accent">
                 Comparar
               </Link>
             }
@@ -228,7 +228,7 @@ export function DashboardPage() {
             title="Combustível"
             id="sec-combustivel"
             action={
-              <Link to="/combustiveis" className="text-sm font-semibold text-accent">
+              <Link to="/combustiveis" className="-my-2.5 py-2.5 pl-3 text-sm font-semibold text-accent">
                 Ver postos
               </Link>
             }
@@ -355,8 +355,8 @@ function SavingsPanel({
           : 'Registre suas compras para acompanhar quanto está economizando.'}
       </p>
       <Link to="/orcamento" className="relative mt-5 block rounded-lg bg-white/[0.06] p-3.5 hover:bg-white/10">
-        <div className="mb-2 flex items-baseline justify-between gap-3 text-sm">
-          <span className="text-[#CBD5E1]">Gasto no mês</span>
+        <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 text-sm">
+          <span className="whitespace-nowrap text-[#CBD5E1]">Gasto no mês</span>
           <span className="price font-bold">
             {money(spent)}
             {budget > 0 && <span className="font-normal text-[#94A3B8]"> de {money(budget)}</span>}

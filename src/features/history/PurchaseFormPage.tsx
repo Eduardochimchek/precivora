@@ -162,9 +162,12 @@ export default function PurchaseFormPage() {
             const sub = parsed[i].q * parsed[i].u;
             return (
               <div key={r.key} className="flex flex-col gap-2 p-3 sm:flex-row sm:items-end">
-                <div className="min-w-0 flex-1 sm:pb-3">
-                  <div className="truncate font-semibold">{p?.name ?? 'Produto removido'}</div>
-                  <div className="text-xs text-muted">{p ? packageLabel(p) : ''}</div>
+                <div className="flex min-w-0 flex-1 items-start justify-between gap-3 sm:pb-3">
+                  <div className="min-w-0">
+                    <div className="truncate font-semibold">{p?.name ?? 'Produto removido'}</div>
+                    <div className="text-xs text-muted">{p ? packageLabel(p) : ''}</div>
+                  </div>
+                  <div className="price shrink-0 text-sm font-bold sm:hidden">{Number.isFinite(sub) ? money(sub) : '—'}</div>
                 </div>
                 <div className="flex items-end gap-2">
                   <TextField
@@ -173,7 +176,7 @@ export default function PurchaseFormPage() {
                     value={r.quantity}
                     error={errors[`q-${r.key}`]}
                     onChange={(e) => setRows((rs) => rs.map((x) => (x.key === r.key ? { ...x, quantity: e.target.value } : x)))}
-                    wrapperClassName="w-20"
+                    wrapperClassName="w-16 shrink-0 sm:w-20"
                   />
                   <TextField
                     label="Preço unit."
@@ -182,9 +185,9 @@ export default function PurchaseFormPage() {
                     value={r.unitPrice}
                     error={errors[`u-${r.key}`]}
                     onChange={(e) => setRows((rs) => rs.map((x) => (x.key === r.key ? { ...x, unitPrice: e.target.value } : x)))}
-                    wrapperClassName="w-32"
+                    wrapperClassName="min-w-0 flex-1 sm:w-32 sm:flex-none"
                   />
-                  <div className="price mb-3 w-20 text-right text-sm font-bold">{Number.isFinite(sub) ? money(sub) : '—'}</div>
+                  <div className="price mb-3 hidden w-20 text-right text-sm font-bold sm:block">{Number.isFinite(sub) ? money(sub) : '—'}</div>
                   <IconButton label={`Remover ${p?.name ?? 'item'}`} className="mb-0.5" onClick={() => setRows((rs) => rs.filter((x) => x.key !== r.key))}>
                     <Trash2 className="h-4 w-4" />
                   </IconButton>

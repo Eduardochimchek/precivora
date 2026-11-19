@@ -39,16 +39,13 @@ export function StarInput({
 }) {
   const words = ['', 'Ruim', 'Fraco', 'Ok', 'Bom', 'Ótimo'];
   return (
-    <fieldset className="flex items-center justify-between gap-3">
+    <fieldset className="flex flex-col items-start gap-0.5">
       <legend className="sr-only">{label}</legend>
       <span className="text-[15px] font-semibold" aria-hidden>
         {label}
         {optional && <span className="text-sm font-normal text-muted"> (opcional)</span>}
       </span>
-      <div className="flex items-center gap-2">
-        <span className="w-12 text-right text-xs text-muted" aria-live="polite">
-          {words[value] ?? ''}
-        </span>
+      <div className="-ml-1.5 flex items-center gap-1">
         <div
           role="radiogroup"
           aria-label={label}
@@ -82,6 +79,9 @@ export function StarInput({
             </button>
           ))}
         </div>
+        <span className="w-11 text-xs text-muted" aria-live="polite">
+          {words[value] ?? ''}
+        </span>
       </div>
     </fieldset>
   );

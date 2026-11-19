@@ -163,6 +163,7 @@ export default function ListDetailPage() {
                     <button
                       onClick={() => updateListItem(it.id, { priority: PRIORITY_ORDER[(PRIORITY_ORDER.indexOf(it.priority) + 1) % 3] })}
                       aria-label={`Prioridade ${PRIORITY[it.priority].label}. Tocar para mudar.`}
+                      className="-my-2 py-2"
                     >
                       <Chip tone={PRIORITY[it.priority].tone}>{PRIORITY[it.priority].label}</Chip>
                     </button>

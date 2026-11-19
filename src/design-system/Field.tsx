@@ -192,7 +192,7 @@ export function Segmented<T extends string>({
           aria-checked={value === o.value}
           onClick={() => onChange(o.value)}
           className={cx(
-            'flex h-9 flex-1 items-center justify-center gap-1.5 rounded-md px-2 text-sm font-semibold transition-colors',
+            'flex h-9 min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-1.5 text-[13px] font-semibold transition-colors min-[380px]:px-2 min-[380px]:text-sm',
             value === o.value ? 'bg-surface text-ink shadow-card' : 'text-muted hover:text-ink',
           )}
         >

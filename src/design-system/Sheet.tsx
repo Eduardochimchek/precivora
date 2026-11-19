@@ -111,12 +111,12 @@ export function Sheet({ open, onClose, title, description, children, footer, siz
         aria-describedby={description ? descId : undefined}
         tabIndex={-1}
         className={cx(
-          'relative flex max-h-[92dvh] w-full animate-sheet-up flex-col rounded-t-2xl bg-surface shadow-float outline-none md:animate-pop-in md:rounded-2xl',
+          'relative flex max-h-[92dvh] w-full animate-sheet-up flex-col rounded-t-2xl bg-surface shadow-float outline-none sm:max-w-xl md:animate-pop-in md:rounded-2xl',
           size === 'lg' ? 'md:max-w-2xl' : 'md:max-w-lg',
         )}
       >
-        <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-line md:hidden" aria-hidden />
-        <header className="flex items-start gap-3 px-5 pb-2 pt-3 md:pt-5">
+        <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-line md:hidden short:hidden" aria-hidden />
+        <header className="flex items-start gap-3 px-5 pb-2 pt-3 md:pt-5 short:pb-0 short:pt-2">
           <div className="min-w-0 flex-1 pt-1.5">
             <h2 id={titleId} className="text-xl font-bold leading-tight">
               {title}
@@ -131,8 +131,8 @@ export function Sheet({ open, onClose, title, description, children, footer, siz
             <X className="h-5 w-5" />
           </IconButton>
         </header>
-        <div className="flex-1 overflow-y-auto overscroll-contain px-5 pb-5 pt-2">{children}</div>
-        {footer && <footer className="flex gap-3 border-t border-line px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4">{footer}</footer>}
+        <div className="flex-1 overflow-y-auto overscroll-contain px-5 pb-5 pt-2 short:pb-3">{children}</div>
+        {footer && <footer className="flex gap-3 border-t border-line px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 short:pb-[max(0.5rem,env(safe-area-inset-bottom))] short:pt-2">{footer}</footer>}
       </div>
     </div>,
     document.body,

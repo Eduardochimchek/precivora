@@ -87,7 +87,7 @@ export default function BudgetPage() {
             )}
             {settings.savingsGoal > 0 && (
               <div className="mt-4 border-t border-line pt-4">
-                <div className="mb-2 flex justify-between text-sm">
+                <div className="mb-2 flex flex-wrap justify-between gap-x-3 text-sm">
                   <span className="text-muted">Meta de economia</span>
                   <span className="price font-bold">
                     <span className="text-lime-ink">{money(data.savings)}</span> de {money(settings.savingsGoal)}
@@ -146,8 +146,12 @@ function CategoryRow({ name, color, spent, limit, level, onSave }: { name: strin
     <div className="flex flex-col gap-2 px-4 py-3">
       <div className="flex items-center gap-3">
         <span className="h-2.5 w-2.5 rounded-full" style={{ background: color }} aria-hidden />
-        <span className="min-w-0 flex-1 truncate font-semibold">{name}</span>
-        <span className="price text-sm font-bold">{money(spent)}</span>
+        <div className="min-w-0 flex-1">
+          <div className="truncate font-semibold">{name}</div>
+          <div className="text-xs text-muted">
+            <span className="price font-bold text-ink">{money(spent)}</span> no mês
+          </div>
+        </div>
         <label className="sr-only" htmlFor={`lim-${name}`}>
           Limite de {name}
         </label>
