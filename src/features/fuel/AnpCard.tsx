@@ -76,19 +76,14 @@ export function AnpCard() {
       />
       {settings.anpAlert && (
         <div className="flex flex-col gap-3 rounded-lg bg-sunken p-3">
-          <div className="grid grid-cols-2 items-end gap-3">
-            <SelectField label="Conferir às" value={settings.anpAlertHour} onChange={(e) => void setAlert({ anpAlertHour: Number(e.target.value) })}>
-              {Array.from({ length: 18 }, (_, i) => i + 5).map((h) => (
-                <option key={h} value={h}>
-                  {String(h).padStart(2, '0')}:00
-                </option>
-              ))}
-            </SelectField>
-            <SelectField label="Rede" value={settings.anpAlertWifi ? 'wifi' : 'any'} onChange={(e) => void setAlert({ anpAlertWifi: e.target.value === 'wifi' })}>
-              <option value="wifi">Só no Wi-Fi</option>
-              <option value="any">Wi-Fi ou dados</option>
-            </SelectField>
-          </div>
+          <SelectField label="Conferir às" value={settings.anpAlertHour} onChange={(e) => void setAlert({ anpAlertHour: Number(e.target.value) })}>
+            {Array.from({ length: 18 }, (_, i) => i + 5).map((h) => (
+              <option key={h} value={h}>
+                {String(h).padStart(2, '0')}:00
+              </option>
+            ))}
+          </SelectField>
+          <Toggle label="Só baixar no Wi-Fi" description="Desligado, usa também os dados móveis." checked={settings.anpAlertWifi} onChange={(v) => void setAlert({ anpAlertWifi: v })} />
           <fieldset>
             <legend className="mb-2 text-sm font-semibold">Combustíveis</legend>
             <div className="flex flex-wrap gap-2">
