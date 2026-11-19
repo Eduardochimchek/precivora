@@ -16,6 +16,7 @@ import { fromDateInput, toDateInput } from '@/utils/date';
 import { money, parseDecimal, toInputDecimal } from '@/utils/format';
 import { newId } from '@/utils/id';
 import type { ID } from '@/types';
+import { clearCart, loadCart } from '@/app/cart';
 
 interface Row {
   key: string;
@@ -82,9 +83,10 @@ export default function PurchaseFormPage() {
         .toArray()
         .then((its) => {
           const store = (params.get('lugar') ?? params.get('mercado')) ?? '';
+          const cartPrices = params.get('carrinho') ? loadCart(listId).prices : {};
           setRows(
             its.map((i) => {
-              const lp = lastPrice(i.productId, store);
+              const lp = cartPrices[i.id] ?? lastPrice(i.productId, store);
               return { key: newId(), productId: i.productId, quantity: String(i.quantity).replace('.', ','), unitPrice: lp ? toInputDecimal(lp) : '' };
             }),
           );
@@ -122,6 +124,8 @@ export default function PurchaseFormPage() {
         id,
       );
       toast(id ? 'Compra atualizada' : 'Compra registrada');
+      const fromList = params.get('lista');
+      if (fromList && params.get('carrinho')) clearCart(fromList);
       navigate('/historico', { replace: true, state: { highlight: pid } });
     } catch (err) {
       toast((err as Error).message, 'error');

@@ -32,6 +32,7 @@ import { formatMonthLong, greeting, relativeDays, startOfMonth } from '@/utils/d
 import { money, money3, percent } from '@/utils/format';
 import { capitalizeFirst } from '@/utils/text';
 import type { ActivityKind, FuelType, ID } from '@/types';
+import { UpdateBanner } from '@/features/update/UpdateBanner';
 
 const ACTIVITY_ICON: Record<ActivityKind, typeof Tag> = {
   price: Tag,
@@ -116,6 +117,8 @@ export function DashboardPage() {
           <p className="text-sm text-muted">{capitalizeFirst(new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).format(now))}</p>
         </div>
       </header>
+
+      <UpdateBanner />
 
       {loading ? (
         <div className="flex flex-col gap-4" aria-busy="true">

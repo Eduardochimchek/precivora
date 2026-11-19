@@ -417,6 +417,33 @@ try {
     await shot('09-lista', false);
   });
 
+  await step('modo mercado: anota preço, soma o carrinho e vira compra', async () => {
+    await go('/listas');
+    await page.getByRole('link', { name: /Compra do mês/ }).click();
+    await page.getByRole('link', { name: /Modo mercado/ }).click();
+    await page.waitForSelector('text=Falta pegar');
+    if (!(await page.getByLabel('Lugar', { exact: true }).innerText()).includes('Atacarejo')) await pickPlace(page, 'Atacarejo');
+    const item = page.locator('section[aria-labelledby="falta"] button').first();
+    const itemName = (await item.locator('span.truncate').innerText()).trim();
+    await item.click();
+    const sheet = page.getByRole('dialog', { name: itemName });
+    await sheet.getByLabel('Preço da embalagem').fill('9,99');
+    await sheet.getByLabel('Quantidade').fill('2');
+    await sheet.getByRole('button', { name: /Pôr no carrinho/ }).click();
+    await page.waitForTimeout(400);
+    const cart = (await page.getByRole('region', { name: 'Carrinho', exact: true }).innerText()).replace(/ /g, ' ');
+    assert(cart.includes('R$ 19,98'), `carrinho sem o total certo: ${cart}`);
+    await shot('09b-modo-mercado', false);
+    await page.getByRole('button', { name: 'Finalizar e registrar compra' }).click();
+    await page.waitForSelector('text=Nova compra');
+    const vals = await page.locator('input[inputmode="decimal"]').evaluateAll((els) => els.map((e) => e.value));
+    assert(vals.includes('9,99'), `compra não veio com o preço do carrinho: ${vals.join(' | ')}`);
+    await page.getByRole('button', { name: 'Registrar compra' }).last().click();
+    await page.waitForSelector('text=Compra registrada');
+    const left = await page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('precivora:carrinho')).length);
+    assert(left === 0, 'carrinho não foi limpo depois de registrar a compra');
+  });
+
   await step('histórico com gráfico e categorias', async () => {
     await go('/historico');
     await page.waitForSelector('text=Gasto por mês');

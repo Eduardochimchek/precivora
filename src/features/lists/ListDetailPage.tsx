@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useGoBack } from '@/app/useGoBack';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Archive, ArchiveRestore, Check, Copy, Info, ListChecks, Minus, Pencil, Plus, Route, ShoppingCart, Trash2, Trophy } from 'lucide-react';
+import { Archive, ArchiveRestore, Check, Copy, Info, ListChecks, Minus, Pencil, Plus, Route, ScanBarcode, Share2, ShoppingCart, Trash2, Trophy } from 'lucide-react';
 import { db } from '@/db/database';
 import { PageHeader } from '@/components/PageHeader';
 import { Button, Card, Chip, EmptyState, IconButton, ListSkeleton, PlaceMark, PriceTag, Section, Sheet, TextField, Toggle, cx, useFeedback } from '@/design-system';
@@ -16,6 +16,8 @@ import { byRecent } from '@/services/comparison';
 import { packageLabel, packagePrice } from '@/services/units';
 import { isStale } from '@/utils/date';
 import { money, parseDecimal, toInputDecimal } from '@/utils/format';
+import { shareMessage } from '@/utils/download';
+import { buildListMessage } from '@/services/listMessage';
 import type { ID, Priority } from '@/types';
 
 const PRIORITY: Record<Priority, { label: string; tone: 'bad' | 'neutral' | 'info' }> = {
@@ -46,25 +48,30 @@ export default function ListDetailPage() {
 
   const pending = useMemo(() => (items ?? []).filter((i) => !i.checked), [items]);
 
+  const quotes = useMemo(() => {
+    const q: QuoteTable = new Map();
+    if (!prices || !stores) return q;
+    const activeStores = new Set(stores.filter((s) => s.active).map((s) => s.id));
+    const wanted = new Set(pending.map((i) => i.productId));
+    for (const r of [...prices].sort(byRecent)) {
+      if (!wanted.has(r.productId) || !activeStores.has(r.storeId)) continue;
+      const m = q.get(r.productId) ?? new Map();
+      if (!m.has(r.storeId)) m.set(r.storeId, { price: packagePrice(r), date: r.date, stale: isStale(r.date, settings.staleDays) });
+      q.set(r.productId, m);
+    }
+    return q;
+  }, [prices, stores, pending, settings.staleDays]);
+
   const result = useMemo(() => {
     if (!prices || !stores) return null;
     const activeStores = stores.filter((s) => s.active).map((s) => s.id);
-    const quotes: QuoteTable = new Map();
-    const sorted = [...prices].sort(byRecent);
-    const wanted = new Set(pending.map((i) => i.productId));
-    for (const r of sorted) {
-      if (!wanted.has(r.productId) || !activeStores.includes(r.storeId)) continue;
-      const m = quotes.get(r.productId) ?? new Map();
-      if (!m.has(r.storeId)) m.set(r.storeId, { price: packagePrice(r), date: r.date, stale: isStale(r.date, settings.staleDays) });
-      quotes.set(r.productId, m);
-    }
     return optimizeList(
       pending.map((i) => ({ itemId: i.id, productId: i.productId, quantity: i.quantity })),
       quotes,
       activeStores,
       { tripCost: settings.tripCost, preferSingleStore: settings.preferSingleStore, minSplitSavings: settings.minSplitSavings },
     );
-  }, [prices, stores, pending, settings.staleDays, settings.tripCost, settings.preferSingleStore, settings.minSplitSavings]);
+  }, [prices, stores, pending, quotes, settings.tripCost, settings.preferSingleStore, settings.minSplitSavings]);
 
   if (list === undefined || !items || !products) return <div className="pt-9"><ListSkeleton /></div>;
   if (list === null)
@@ -83,6 +90,30 @@ export default function ListDetailPage() {
   const checkedCount = items.length - pending.length;
   const rec = result?.recommendation;
 
+  async function shareList() {
+    const assigned = new Map((result?.split?.assignments ?? []).map((a) => [a.itemId, a]));
+    const single = rec?.kind === 'single' ? rec.stores[0] : undefined;
+    const message = buildListMessage(
+      list!.name,
+      sortedItems.map((it) => {
+        const p = productMap.get(it.productId);
+        let storeId: ID | undefined;
+        let price: number | undefined;
+        if (!it.checked && rec?.kind === 'split') {
+          storeId = assigned.get(it.id)?.storeId;
+          price = assigned.get(it.id)?.price;
+        } else if (!it.checked && single) {
+          const q = quotes.get(it.productId)?.get(single);
+          if (q) [storeId, price] = [single, q.price];
+        }
+        return { name: p?.name ?? 'Produto removido', pkg: p ? packageLabel(p) : undefined, quantity: it.quantity, checked: it.checked, storeName: storeId ? storeMap.get(storeId)?.name : undefined, price };
+      }),
+    );
+    const out = await shareMessage(message, list!.name);
+    if (out === 'copied') toast('Lista copiada. É só colar no WhatsApp.');
+    else if (out === 'unsupported') toast('Não foi possível compartilhar neste aparelho.', 'error');
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
@@ -90,6 +121,10 @@ export default function ListDetailPage() {
         title={list.name}
         subtitle={`${items.length} ${items.length === 1 ? 'item' : 'itens'} · ${checkedCount} comprado${checkedCount === 1 ? '' : 's'}`}
         actions={
+          <>
+          <IconButton label="Compartilhar lista" onClick={() => void shareList()} disabled={!items.length}>
+            <Share2 className="h-5 w-5" />
+          </IconButton>
           <IconButton
             label="Renomear lista"
             onClick={() => {
@@ -99,6 +134,7 @@ export default function ListDetailPage() {
           >
             <Pencil className="h-5 w-5" />
           </IconButton>
+          </>
         }
       />
 
@@ -131,6 +167,21 @@ export default function ListDetailPage() {
           />
         </div>
       </form>
+
+      {pending.length > 0 && (
+        <Link
+          to={`/listas/${list.id}/mercado${rec?.kind === 'single' ? `?lugar=${rec.stores[0]}` : ''}`}
+          className="flex items-center gap-3 rounded-xl bg-lime p-4 text-navy shadow-card hover:brightness-95"
+        >
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-navy text-lime">
+            <ScanBarcode className="h-5 w-5" aria-hidden />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-display text-lg font-bold leading-tight">Modo mercado</span>
+            <span className="block text-sm text-navy/75">Leia os códigos, anote os preços e veja o total do carrinho</span>
+          </span>
+        </Link>
+      )}
 
       {items.length === 0 ? (
         <EmptyState icon={<ListChecks className="h-6 w-6" />} title="Lista vazia">

@@ -5,6 +5,7 @@ import { Button, Card, Logo } from '@/design-system';
 import { useSettings } from '@/app/SettingsContext';
 import { isIOS, isStandalone, useInstallPrompt } from '@/app/install';
 import { daysBetween } from '@/utils/date';
+import { UpdateBanner } from '@/features/update/UpdateBanner';
 
 const GROUPS = [
   {
@@ -45,6 +46,7 @@ export default function MorePage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title="Mais" />
+      <UpdateBanner />
       {backupOld && (
         <Link to="/backup" className="flex items-center gap-3 rounded-lg border border-warn/40 bg-warn/[.08] p-4 text-sm">
           <AlertTriangle className="h-5 w-5 shrink-0 text-warn" aria-hidden />

@@ -22,6 +22,7 @@ const PlaceDetailPage = lazy(() => import('@/features/places/PlaceDetailPage'));
 const SegmentsPage = lazy(() => import('@/features/places/SegmentsPage'));
 const ListsPage = lazy(() => import('@/features/lists/ListsPage'));
 const ListDetailPage = lazy(() => import('@/features/lists/ListDetailPage'));
+const MarketModePage = lazy(() => import('@/features/lists/MarketModePage'));
 const HistoryPage = lazy(() => import('@/features/history/HistoryPage'));
 const PurchaseFormPage = lazy(() => import('@/features/history/PurchaseFormPage'));
 const BrandsPage = lazy(() => import('@/features/brands/BrandsPage'));
@@ -79,6 +80,7 @@ export default function App({ settings }: { settings: Settings }) {
                     <Route path="postos/:id" element={<PlaceDetailPage />} />
                     <Route path="listas" element={<ListsPage />} />
                     <Route path="listas/:id" element={<ListDetailPage />} />
+                    <Route path="listas/:id/mercado" element={<MarketModePage />} />
                     <Route path="historico" element={<HistoryPage />} />
                     <Route path="compras/nova" element={<PurchaseFormPage />} />
                     <Route path="notas/importar" element={<ImportReceiptPage />} />

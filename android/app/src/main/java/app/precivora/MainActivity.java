@@ -10,6 +10,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(SystemThemePlugin.class);
         registerPlugin(NfceBrowserPlugin.class);
         registerPlugin(LocationSettingsPlugin.class);
+        registerPlugin(AnpAlertPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

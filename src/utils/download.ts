@@ -61,3 +61,25 @@ export async function shareText(content: string, filename: string, title: string
     return 'unsupported';
   }
 }
+
+/** Compartilha um texto (WhatsApp, e-mail...). Sem folha de compartilhamento, copia para a área de transferência. */
+export async function shareMessage(text: string, title: string): Promise<ShareOutcome | 'copied'> {
+  try {
+    if (isNative) {
+      await Share.share({ title, text, dialogTitle: title });
+      return 'shared';
+    }
+    if (typeof navigator.share === 'function') {
+      await navigator.share({ title, text });
+      return 'shared';
+    }
+  } catch (err) {
+    if (/cancel|abort/i.test(`${(err as Error)?.name} ${(err as Error)?.message}`)) return 'cancelled';
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    return 'copied';
+  } catch {
+    return 'unsupported';
+  }
+}

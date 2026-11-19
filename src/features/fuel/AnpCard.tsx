@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { RefreshCw } from 'lucide-react';
-import { Button, Card, Toggle, useFeedback } from '@/design-system';
+import { Button, Card, SelectField, Toggle, cx, useFeedback } from '@/design-system';
+import { FUEL_SHORT } from '@/services/fuel';
+import { FUEL_TYPES, type Settings } from '@/types';
 import { useSettings } from '@/app/SettingsContext';
 import { isNative } from '@/app/native';
 import { formatDate, relativeDays } from '@/utils/date';
@@ -11,6 +13,24 @@ export function AnpCard() {
   const { toast } = useFeedback();
   const [busy, setBusy] = useState(false);
   if (!isNative) return null;
+
+  async function setAlert(patch: Partial<Settings>) {
+    await update(patch);
+    const { syncAnpAlert } = await import('@/app/anpAlert');
+    await syncAnpAlert();
+  }
+
+  async function toggleAlert(on: boolean) {
+    if (on) {
+      const { notificationsAllowed } = await import('@/app/anpAlert');
+      if (!(await notificationsAllowed(true))) {
+        toast('Sem permissão de notificação. Libere nas configurações do Android para receber o aviso.', 'error');
+        return;
+      }
+    }
+    await setAlert({ anpAlert: on });
+    if (on) toast(`Combinado: todo dia às ${settings.anpAlertHour}h o app confere a ANP e avisa se aparecer preço menor.`);
+  }
 
   async function run() {
     setBusy(true);
@@ -48,6 +68,56 @@ export function AnpCard() {
         checked={settings.anpAuto}
         onChange={(v) => void update({ anpAuto: v })}
       />
+      <Toggle
+        label="Avisar preço baixo"
+        description="Todo dia, com o app fechado, confere a coleta da ANP nas suas cidades e manda uma notificação se aparecer preço menor que o menor que você tem. A ANP publica uma coleta por semana."
+        checked={settings.anpAlert}
+        onChange={(v) => void toggleAlert(v)}
+      />
+      {settings.anpAlert && (
+        <div className="flex flex-col gap-3 rounded-lg bg-sunken p-3">
+          <div className="grid grid-cols-2 items-end gap-3">
+            <SelectField label="Conferir às" value={settings.anpAlertHour} onChange={(e) => void setAlert({ anpAlertHour: Number(e.target.value) })}>
+              {Array.from({ length: 18 }, (_, i) => i + 5).map((h) => (
+                <option key={h} value={h}>
+                  {String(h).padStart(2, '0')}:00
+                </option>
+              ))}
+            </SelectField>
+            <SelectField label="Rede" value={settings.anpAlertWifi ? 'wifi' : 'any'} onChange={(e) => void setAlert({ anpAlertWifi: e.target.value === 'wifi' })}>
+              <option value="wifi">Só no Wi-Fi</option>
+              <option value="any">Wi-Fi ou dados</option>
+            </SelectField>
+          </div>
+          <fieldset>
+            <legend className="mb-2 text-sm font-semibold">Combustíveis</legend>
+            <div className="flex flex-wrap gap-2">
+              {FUEL_TYPES.map((f) => {
+                const on = settings.anpAlertFuels.includes(f);
+                return (
+                  <button
+                    key={f}
+                    type="button"
+                    role="checkbox"
+                    aria-checked={on}
+                    onClick={() => {
+                      const next = on ? settings.anpAlertFuels.filter((x) => x !== f) : [...settings.anpAlertFuels, f];
+                      if (next.length) void setAlert({ anpAlertFuels: next });
+                    }}
+                    className={cx(
+                      'h-9 rounded-full border px-3.5 text-sm font-semibold transition-colors',
+                      on ? 'border-transparent bg-primary text-on-primary' : 'border-line bg-surface text-muted hover:text-ink',
+                    )}
+                  >
+                    {FUEL_SHORT[f]}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+          <p className="text-xs text-muted">O arquivo da ANP tem cerca de 12 MB. Ao tocar no aviso, o app abre em Combustíveis e já traz a coleta nova.</p>
+        </div>
+      )}
     </Card>
   );
 }

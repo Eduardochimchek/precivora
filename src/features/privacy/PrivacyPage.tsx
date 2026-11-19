@@ -88,6 +88,14 @@ export default function PrivacyPage() {
               onChange={(v) => void update({ anpAuto: v })}
             />
           )}
+          {isNative && (
+            <Toggle
+              label="Procurar versão nova"
+              description="Ao abrir o app, no máximo uma vez por dia, consulta no GitHub se saiu uma versão nova. Nada sobre você é enviado."
+              checked={settings.updateCheck}
+              onChange={(v) => void update({ updateCheck: v })}
+            />
+          )}
           <p className="text-xs text-muted">As outras consultas (nota fiscal, código de barras, mapa, rotas) só acontecem quando você toca nelas.</p>
         </Card>
       </Section>

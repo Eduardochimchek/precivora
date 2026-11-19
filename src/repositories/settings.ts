@@ -15,13 +15,18 @@ export const DEFAULT_SETTINGS: Settings = {
   onboardingDone: false,
   checklistHidden: false,
   anpAuto: false,
+  anpAlert: false,
+  anpAlertHour: 8,
+  anpAlertFuels: ['gasolina_comum'],
+  anpAlertWifi: true,
   geoAuto: true,
+  updateCheck: true,
   autoBackup: false,
   autoBackupDays: 7,
   autoBackupKeep: 4,
 };
 
-const OPTIONAL_KEYS = new Set(['lastBackupAt', 'anpCheckedAt', 'anpLatest', 'lastAutoBackupAt', 'lastAutoBackupBytes']);
+const OPTIONAL_KEYS = new Set(['lastBackupAt', 'anpCheckedAt', 'anpLatest', 'lastAutoBackupAt', 'lastAutoBackupBytes', 'updateCheckedAt', 'updateLatest']);
 
 export async function getSettings(): Promise<Settings> {
   const rows = await db.settings.toArray();

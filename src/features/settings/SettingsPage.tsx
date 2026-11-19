@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { Button, Card, Section, Segmented, TextField, useFeedback } from '@/design-system';
 import { useSettings } from '@/app/SettingsContext';
 import { wipeAllData } from '@/services/backup';
+import { appVersion } from '@/app/updateCheck';
 import { db, SCHEMA_VERSION } from '@/db/database';
 import { parseDecimal, toInputDecimal } from '@/utils/format';
 import type { ThemePreference } from '@/types';
@@ -13,6 +14,10 @@ import type { ThemePreference } from '@/types';
 export default function SettingsPage() {
   const navigate = useNavigate();
   const { hash } = useLocation();
+  const [version, setVersion] = useState<string>();
+  useEffect(() => {
+    void appVersion().then(setVersion);
+  }, []);
   useEffect(() => {
     if (hash) window.setTimeout(() => document.getElementById(hash.slice(1))?.scrollIntoView({ block: 'start' }), 100);
   }, [hash]);
@@ -126,7 +131,7 @@ export default function SettingsPage() {
             {storage.persisted == null ? 'não informado pelo navegador' : storage.persisted ? 'ativo (o navegador não apaga sozinho)' : 'não concedido — instale o app e faça backups'}
             {storage.usage != null && ` · uso aproximado: ${(storage.usage / 1024 / 1024).toFixed(1).replace('.', ',')} MB`}
           </p>
-          <p className="text-muted">Versão do app 1.0.0 · esquema de dados v{SCHEMA_VERSION}</p>
+          <p className="text-muted">{version ? `Versão do app ${version}` : 'Versão web'} · esquema de dados v{SCHEMA_VERSION}</p>
         </Card>
       </Section>
 

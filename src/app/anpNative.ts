@@ -32,6 +32,7 @@ export function updateAnpPrices(): Promise<AnpResult> {
       const result = await applyAnpRows(rows);
       await saveSettings({ anpCheckedAt: new Date().toISOString(), anpLatest: result.latest });
       window.dispatchEvent(new CustomEvent(ANP_UPDATED_EVENT, { detail: result }));
+      void import('./anpAlert').then((m) => m.syncAnpAlert());
       return result;
     } finally {
       running = null;

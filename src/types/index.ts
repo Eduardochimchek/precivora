@@ -245,8 +245,20 @@ export interface Settings {
   checklistHidden: boolean;
   /** Busca sozinho os preços do levantamento da ANP (app, no Wi-Fi). */
   anpAuto: boolean;
+  /** Confere todo dia a coleta da ANP com o app fechado e avisa preço menor (app). */
+  anpAlert: boolean;
+  /** Hora da conferência (0-23). */
+  anpAlertHour: number;
+  anpAlertFuels: FuelType[];
+  /** Só baixa o arquivo no Wi-Fi. */
+  anpAlertWifi: boolean;
   /** Localiza sozinho no mapa (OpenStreetMap/Nominatim) os endereços dos lugares. */
   geoAuto: boolean;
+  /** Procura versão nova no GitHub ao abrir o app (app Android). */
+  updateCheck: boolean;
+  updateCheckedAt?: ISODate;
+  /** Última versão publicada encontrada. */
+  updateLatest?: { version: string; apk: string; page: string };
   /** Cópia automática em Documentos/Precivora/Automatico (app). */
   autoBackup: boolean;
   autoBackupDays: number;
