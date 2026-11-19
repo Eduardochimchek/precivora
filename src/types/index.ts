@@ -245,6 +245,8 @@ export interface Settings {
   checklistHidden: boolean;
   /** Busca sozinho os preços do levantamento da ANP (app, no Wi-Fi). */
   anpAuto: boolean;
+  /** Localiza sozinho no mapa (OpenStreetMap/Nominatim) os endereços dos lugares. */
+  geoAuto: boolean;
   /** Cópia automática em Documentos/Precivora/Automatico (app). */
   autoBackup: boolean;
   autoBackupDays: number;

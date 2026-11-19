@@ -162,7 +162,7 @@ export default function FuelPage() {
             {offMap.pending + offMap.notFound > 0 && (
               <p className="mb-2 rounded-lg bg-sunken px-3 py-2 text-sm text-muted" role="note">
                 {offMap.pending > 0 &&
-                  `${offMap.pending} ${offMap.pending === 1 ? 'posto com preço ainda não está' : 'postos com preço ainda não estão'} no mapa e ${offMap.pending === 1 ? 'fica' : 'ficam'} fora deste filtro. O app está localizando os endereços, um por segundo, enquanto estiver aberto. `}
+                  `${offMap.pending} ${offMap.pending === 1 ? 'posto com preço ainda não está' : 'postos com preço ainda não estão'} no mapa e ${offMap.pending === 1 ? 'fica' : 'ficam'} fora deste filtro. ${settings.geoAuto ? 'O app está localizando os endereços, um por segundo, enquanto estiver aberto.' : 'A localização automática dos endereços está desligada em Mais → Privacidade.'} `}
                 {offMap.notFound > 0 &&
                   `${offMap.notFound} ${offMap.notFound === 1 ? 'posto não teve o endereço encontrado' : 'postos não tiveram o endereço encontrado'}; corrija o endereço no cadastro para ${offMap.notFound === 1 ? 'ele entrar' : 'eles entrarem'}.`}
               </p>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Compass, ListChecks, Monitor, Moon, Sun, Trash2 } from 'lucide-react';
 import { useOnboarding } from '@/features/onboarding/OnboardingContext';
 import { PageHeader } from '@/components/PageHeader';
@@ -12,6 +12,10 @@ import type { ThemePreference } from '@/types';
 
 export default function SettingsPage() {
   const navigate = useNavigate();
+  const { hash } = useLocation();
+  useEffect(() => {
+    if (hash) window.setTimeout(() => document.getElementById(hash.slice(1))?.scrollIntoView({ block: 'start' }), 100);
+  }, [hash]);
   const { settings, update } = useSettings();
   const { startTour } = useOnboarding();
   const { toast, confirm } = useFeedback();
@@ -111,8 +115,12 @@ export default function SettingsPage() {
       <Section title="Privacidade e armazenamento" id="privacidade">
         <Card className="flex flex-col gap-2 p-4 text-sm">
           <p>
-            Tudo fica no banco local do navegador (IndexedDB) deste aparelho. O Precivora não tem login, servidor, anúncios nem rastreadores, e não envia seus dados para ninguém.
+            O que você anota fica no banco local deste aparelho (IndexedDB). O Precivora não tem login, servidor, anúncios nem rastreadores, e o desenvolvedor não recebe nenhum dado seu. Algumas funções
+            consultam serviços públicos na internet, como o mapa e o código de barras.
           </p>
+          <Link to="/privacidade" className="self-start font-semibold text-accent">
+            Ver o que sai do aparelho e a política de privacidade
+          </Link>
           <p className="text-muted">
             Armazenamento persistente:{' '}
             {storage.persisted == null ? 'não informado pelo navegador' : storage.persisted ? 'ativo (o navegador não apaga sozinho)' : 'não concedido — instale o app e faça backups'}
@@ -124,7 +132,10 @@ export default function SettingsPage() {
 
       <Section title="Zona de perigo" id="perigo">
         <Card className="flex flex-col gap-3 p-4">
-          <p className="text-sm text-muted">Apaga todos os produtos, preços, compras, listas, avaliações e ajustes deste aparelho.</p>
+          <p className="text-sm text-muted">
+            Apaga todos os produtos, preços, compras, listas, avaliações e ajustes deste aparelho. Os arquivos de backup que você exportou e as cópias do backup automático continuam onde estão: apague-os em
+            Backup ou no gerenciador de arquivos. Desinstalar o app também apaga tudo o que fica dentro dele.
+          </p>
           <Button
             variant="danger"
             className="self-start"
@@ -141,7 +152,7 @@ export default function SettingsPage() {
               await db.close();
               await db.delete();
               try {
-                localStorage.removeItem('precivora:theme');
+                for (const store of [localStorage, sessionStorage]) for (const k of Object.keys(store)) if (k.startsWith('precivora')) store.removeItem(k);
               } catch {
                 /* ignore */
               }

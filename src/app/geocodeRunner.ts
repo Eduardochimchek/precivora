@@ -1,6 +1,7 @@
 import { CapacitorHttp } from '@capacitor/core';
 import { db } from '@/db/database';
 import { geocodeQueries, readGeocode } from '@/services/geo';
+import { getSettings } from '@/repositories/settings';
 import type { Place } from '@/types';
 import { isNative } from './native';
 
@@ -62,7 +63,7 @@ export async function runGeocoding(): Promise<void> {
     const priced = new Set((await db.fuelPrices.orderBy('stationId').uniqueKeys()).map(String));
     const rank = (p: Place) => (p.favorite ? 0 : priced.has(p.id) ? 1 : fuelSegments.has(p.segmentId) ? 2 : 3);
     for (;;) {
-      if (stopRequested || !navigator.onLine) break;
+      if (stopRequested || !navigator.onLine || !(await getSettings()).geoAuto) break;
       const next = (await db.stores.toArray()).filter((p) => needsGeocode(p)).sort((a, b) => rank(a) - rank(b))[0];
       if (!next) break;
       let found: ReturnType<typeof readGeocode>;

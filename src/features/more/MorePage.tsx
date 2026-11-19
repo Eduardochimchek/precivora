@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { AlertTriangle, ChevronRight, Download, Fuel, LayoutList, Map, MapPin, Package, ScanLine, Settings, ShieldCheck, Smartphone, Star, Tags, Wallet } from 'lucide-react';
+import { AlertTriangle, ChevronRight, Download, Fuel, LayoutList, Lock, Map, MapPin, Package, ScanLine, Settings, ShieldCheck, Smartphone, Star, Tags, Wallet } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { Button, Card, Logo } from '@/design-system';
 import { useSettings } from '@/app/SettingsContext';
@@ -31,6 +31,7 @@ const GROUPS = [
     links: [
       { to: '/backup', label: 'Backup e restauração', icon: ShieldCheck },
       { to: '/ajustes', label: 'Ajustes', icon: Settings },
+      { to: '/privacidade', label: 'Privacidade', icon: Lock },
     ],
   },
 ];

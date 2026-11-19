@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { FolderOpen, Save } from 'lucide-react';
+import { FolderOpen, Save, Trash2 } from 'lucide-react';
 import { Button, Card, Section, SelectField, Toggle, useFeedback } from '@/design-system';
 import { useSettings } from '@/app/SettingsContext';
 import { isNative } from '@/app/native';
-import { AUTO_BACKUP_LABEL, listAutoBackups, nextAutoBackupAt, runAutoBackup, type AutoBackupFile } from '@/app/autoBackup';
+import { AUTO_BACKUP_LABEL, deleteAutoBackups, listAutoBackups, nextAutoBackupAt, runAutoBackup, type AutoBackupFile } from '@/app/autoBackup';
 import { formatDateTime, relativeDays } from '@/utils/date';
 
 const DAYS = [1, 3, 7, 15, 30];
@@ -15,7 +15,7 @@ export const fileSize = (bytes: number) =>
 /** Controle do backup automático: ligar/parar, intervalo, cópias guardadas, onde ficam e quanto ocupam. */
 export function AutoBackupCard() {
   const { settings, update } = useSettings();
-  const { toast } = useFeedback();
+  const { toast, confirm } = useFeedback();
   const [files, setFiles] = useState<AutoBackupFile[]>([]);
   const [busy, setBusy] = useState(false);
   const [showFiles, setShowFiles] = useState(false);
@@ -94,6 +94,28 @@ export function AutoBackupCard() {
           {files.length > 0 && (
             <Button variant="ghost" icon={<FolderOpen className="h-4 w-4" />} onClick={() => setShowFiles((v) => !v)} aria-expanded={showFiles}>
               {showFiles ? 'Esconder cópias' : 'Ver cópias'}
+            </Button>
+          )}
+          {files.length > 0 && (
+            <Button
+              variant="ghost"
+              className="text-danger"
+              icon={<Trash2 className="h-4 w-4" />}
+              onClick={async () => {
+                const ok = await confirm({
+                  title: 'Apagar as cópias automáticas?',
+                  message: `As ${files.length} cópias em ${AUTO_BACKUP_LABEL} serão apagadas. Os dados do app continuam.`,
+                  confirmLabel: 'Apagar cópias',
+                  danger: true,
+                });
+                if (!ok) return;
+                const n = await deleteAutoBackups();
+                setFiles(await listAutoBackups());
+                setShowFiles(false);
+                toast(`${n} ${n === 1 ? 'cópia apagada' : 'cópias apagadas'}`);
+              }}
+            >
+              Apagar cópias
             </Button>
           )}
         </div>

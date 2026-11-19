@@ -15,6 +15,7 @@ export const DEFAULT_SETTINGS: Settings = {
   onboardingDone: false,
   checklistHidden: false,
   anpAuto: false,
+  geoAuto: true,
   autoBackup: false,
   autoBackupDays: 7,
   autoBackupKeep: 4,

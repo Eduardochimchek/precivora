@@ -25,7 +25,7 @@ const SECTION: [RegExp, string][] = [
   [/^\/(comparar|combustiveis|produtos\/)/, '/comparar'],
   [/^\/listas/, '/listas'],
   [/^\/(historico|compras)/, '/historico'],
-  [/^\/(mais|lugares|tipos|mercados|postos|produtos$|marcas|avaliacoes|orcamento|backup|ajustes)/, '/mais'],
+  [/^\/(mais|lugares|tipos|mercados|postos|produtos$|marcas|avaliacoes|orcamento|backup|ajustes|privacidade)/, '/mais'],
 ];
 
 /** Telas abertas de vários lugares: mantêm acesa a aba de onde a pessoa veio. */

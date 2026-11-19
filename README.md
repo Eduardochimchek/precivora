@@ -104,10 +104,15 @@ O build é estático (`dist/`) e usa rotas com `#`, então funciona em qualquer 
 
 ## Privacidade
 
+A política completa, conforme a LGPD, está em [PRIVACIDADE.md](PRIVACIDADE.md) e dentro do app, em **Mais → Privacidade**.
+
 - Sem login, sem servidor do Precivora, sem anúncios, sem rastreadores.
 - Tudo fica no **IndexedDB** do aparelho (no app Android, dentro do próprio app). O PWA pede armazenamento persistente para reduzir o risco de o navegador apagar os dados.
 - Desinstalar o app, limpar os dados do navegador ou trocar de aparelho **apaga os registros**. Por isso o app lembra de fazer backup, mostra quando foi o último e, no celular, envia o arquivo pelo compartilhamento do sistema.
-- Acessos à internet, sempre por ação sua: a consulta da nota fiscal, feita direto no site da Secretaria da Fazenda (o app só lê a página que a Fazenda mostra), a busca de produto pelo código de barras no Open Food Facts (vai só o número do código), os preços do levantamento semanal da ANP (download do arquivo público, no botão “Atualizar” ou sozinho no Wi-Fi se você ligar), a localização dos endereços dos lugares no OpenStreetMap (Nominatim; vai só o endereço do lugar, um pedido por segundo, sozinho em segundo plano) e as imagens do mapa do OpenStreetMap quando você abre o Mapa. A sua localização só é pedida quando você toca em “Perto de mim” e fica no aparelho, usada para calcular distâncias, o leitor de códigos do Google Play, baixado pelo próprio Android na primeira vez, e o “Abrir no mapa” de um lugar com endereço.
+- O desenvolvedor não recebe nenhum dado. O que sai do aparelho vai direto para serviços públicos, e a política lista cada um: a consulta da nota fiscal no site da Fazenda, o número do código de barras no Open Food Facts, o arquivo de preços da ANP, o endereço dos lugares no OpenStreetMap (Nominatim) e as imagens do mapa. Só a localização dos endereços e a atualização da ANP rodam sozinhas, e as duas podem ser desligadas em **Mais → Privacidade**.
+- A localização do aparelho só é pedida quando você toca em "Perto de mim" ou num filtro de distância, explicando antes para que serve. Fica no aparelho por até 5 minutos e não é enviada.
+- Da nota fiscal, o app guarda só o emitente, os itens, os valores, a data e a chave de acesso. O CPF ou o nome do consumidor, quando aparecem na nota, são ignorados e não ficam guardados.
+- Direitos do titular dentro do próprio app: ver e corrigir em cada tela, levar tudo no backup (JSON aberto) e apagar em **Ajustes → Apagar todos os dados** e em **Backup → Apagar cópias**.
 
 ## Arquitetura
 

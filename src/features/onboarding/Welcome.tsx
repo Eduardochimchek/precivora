@@ -8,7 +8,7 @@ const BENEFITS = [
     ? { icon: ScanLine, title: 'Escaneie a nota fiscal', text: 'Lugar, produtos e preços entram sozinhos.' }
     : { icon: ScanLine, title: 'Anote os preços', text: 'Do mercado, da farmácia, do posto e do que mais quiser.' },
   { icon: Scale, title: 'Compare de verdade', text: 'Preço por quilo ou litro, histórico e suas avaliações.' },
-  { icon: ShieldCheck, title: 'Seus dados são seus', text: 'Sem cadastro, funciona sem internet e nada sai do aparelho.' },
+  { icon: ShieldCheck, title: 'Seus dados são seus', text: 'Sem cadastro e sem servidor: o que você anota fica no aparelho. Veja em Mais → Privacidade o que consulta a internet.' },
 ];
 
 /** Primeira abertura: apresenta o app e pergunta o nome uma única vez. */

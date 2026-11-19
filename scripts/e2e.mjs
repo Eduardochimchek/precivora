@@ -310,6 +310,23 @@ try {
     assert(txt.includes('R$ 5,999'), 'preço novo no Posto Trevo não apareceu no ranking');
   });
 
+  await step('privacidade: política no app e envio automático pode ser desligado', async () => {
+    await go('/mais');
+    await page.locator('main a[href="#/privacidade"]').click();
+    await page.getByRole('heading', { name: 'Seus direitos (art. 18 da LGPD)' }).waitFor();
+    const sw = page.getByRole('switch', { name: /Localizar endereços no mapa/ });
+    assert((await sw.getAttribute('aria-checked')) === 'true', 'localização automática deveria vir ligada');
+    await sw.click();
+    await page.waitForTimeout(300);
+    await page.reload();
+    await page.getByRole('switch', { name: /Localizar endereços no mapa/ }).waitFor();
+    assert((await page.getByRole('switch', { name: /Localizar endereços no mapa/ }).getAttribute('aria-checked')) === 'false', 'desligar não ficou salvo');
+    await shot('16-privacidade');
+    await page.getByRole('switch', { name: /Localizar endereços no mapa/ }).click();
+    const welcome = readFileSync('src/features/onboarding/Welcome.tsx', 'utf8');
+    assert(!/nada sai do aparelho/.test(welcome), 'texto "nada sai do aparelho" voltou');
+  });
+
   await step('voltar retorna à tela de origem e a aba de origem fica acesa', async () => {
     const activeTab = () => page.evaluate(() => [...document.querySelectorAll('nav.fixed a[aria-current="page"]')].map((a) => a.textContent.trim()).join('/'));
     await go('/');

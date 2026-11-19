@@ -29,6 +29,7 @@ const ReviewsPage = lazy(() => import('@/features/reviews/ReviewsPage'));
 const BudgetPage = lazy(() => import('@/features/budget/BudgetPage'));
 const BackupPage = lazy(() => import('@/features/backup/BackupPage'));
 const SettingsPage = lazy(() => import('@/features/settings/SettingsPage'));
+const PrivacyPage = lazy(() => import('@/features/privacy/PrivacyPage'));
 const MorePage = lazy(() => import('@/features/more/MorePage'));
 
 function PageFallback() {
@@ -87,6 +88,7 @@ export default function App({ settings }: { settings: Settings }) {
                     <Route path="orcamento" element={<BudgetPage />} />
                     <Route path="backup" element={<BackupPage />} />
                     <Route path="ajustes" element={<SettingsPage />} />
+                    <Route path="privacidade" element={<PrivacyPage />} />
                     <Route path="mais" element={<MorePage />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Route>

@@ -8,6 +8,7 @@ import { Button, Card, PlaceMark, SegmentIcon, cx } from '@/design-system';
 import { useFuelPrices, usePlaces, useSegments } from '@/hooks/useData';
 import { lastKnownPosition } from '@/app/location';
 import { useLocate } from '@/app/useLocate';
+import { useSettings } from '@/app/SettingsContext';
 import { GEOCODE_EVENT, geocodeStatus, runGeocoding, type GeocodeProgress } from '@/app/geocodeRunner';
 import { distanceKm, formatDistance, hasCoords, PRECISION_LABEL, type LatLng } from '@/services/geo';
 import { FUEL_SHORT } from '@/services/fuel';
@@ -20,6 +21,7 @@ const ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">Op
 export default function MapPage() {
   const [params, setParams] = useSearchParams();
   const locateMe = useLocate();
+  const { settings } = useSettings();
   const segments = useSegments() ?? [];
   const places = usePlaces();
   const fuelPrices = useFuelPrices();
@@ -174,9 +176,19 @@ export default function MapPage() {
 
       {progress && progress.pending > 0 && (
         <p className="text-xs text-muted" aria-live="polite">
-          {progress.running
-            ? `Localizando endereços no mapa: faltam ${progress.pending}. Continua sozinho enquanto o app estiver aberto (1 por segundo).`
-            : `${progress.pending} endereço${progress.pending === 1 ? '' : 's'} ainda sem localização. A busca continua quando o app tiver internet.`}
+          {progress.running ? (
+            `Localizando endereços no mapa: faltam ${progress.pending}. Continua sozinho enquanto o app estiver aberto (1 por segundo).`
+          ) : settings.geoAuto ? (
+            `${progress.pending} endereço${progress.pending === 1 ? '' : 's'} ainda sem localização. A busca continua quando o app tiver internet.`
+          ) : (
+            <>
+              {progress.pending} endereço{progress.pending === 1 ? '' : 's'} sem localização. A localização automática está desligada em{' '}
+              <Link to="/privacidade" className="font-semibold text-accent">
+                Privacidade
+              </Link>
+              .
+            </>
+          )}
         </p>
       )}
       {!progress?.pending && withoutCoords > 0 && <p className="text-xs text-muted">{withoutCoords} lugar(es) sem endereço completo ficam fora do mapa.</p>}

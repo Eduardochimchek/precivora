@@ -58,6 +58,15 @@ export function runAutoBackup(): Promise<AutoBackupFile> {
   return running;
 }
 
+/** Apaga todas as cópias automáticas. Devolve quantas apagou. */
+export async function deleteAutoBackups(): Promise<number> {
+  let n = 0;
+  for (const f of await listAutoBackups()) {
+    await Filesystem.deleteFile({ path: `${AUTO_BACKUP_DIR}/${f.name}`, directory: Directory.Documents }).then(() => n++, () => undefined);
+  }
+  return n;
+}
+
 export const nextAutoBackupAt = (last: string | undefined, days: number) => (last ? new Date(Date.parse(last) + days * 86_400_000) : new Date());
 
 /** Ao abrir ou voltar ao app: grava se estiver ligado e o intervalo escolhido já passou. Falhas ficam silenciosas. */
